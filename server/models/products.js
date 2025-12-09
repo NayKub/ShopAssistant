@@ -23,9 +23,16 @@ const ProductSchema = new mongoose.Schema({
         default: 0,
         min: [0, 'จำนวนคงคลังต้องไม่ติดลบ']
     },
-    image: {
+
+    sold_count: {
+        type: Number,
+        required: true, 
+        default: 0,
+        min: [0, 'จำนวนที่ขายได้ต้องเป็นบวกหรือศูนย์']
+    },
+    image: { 
         type: String, 
-        default: 'no-photo.jpg' 
+        default: 'default-image.jpg' 
     },
 }, 
 { 
