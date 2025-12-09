@@ -29,6 +29,10 @@ const SalesView = ({ navigateTo }) => {
     }, []);
 
     const addToCart = (product) => {
+        // Stop the click event from propagating to the parent div (the product card)
+        // Note: This function is not called by the product card itself, but by the button inside.
+        // We'll address the Edit/Add to Cart conflict below.
+        
         setCart(prevCart => {
             const existingItem = prevCart.find(item => item.product._id === product._id);
             
@@ -60,8 +64,16 @@ const SalesView = ({ navigateTo }) => {
     if (loading) return <div className="p-8 text-center text-xl">Loading products...</div>;
     if (error) return <div className="p-8 text-center text-xl text-red-600">{error}</div>;
 
+    // Helper function เพื่อหยุดการ propagation ของเหตุการณ์ (ใช้เมื่อคลิกปุ่ม Add to Cart)
+    const handleAddClick = (e, product) => {
+        e.stopPropagation(); // สำคัญมาก: เพื่อไม่ให้คลิกนี้ไปเรียก onClick ของ Product Card (Edit)
+        addToCart(product);
+    };
+
+
     return (
         <div className="flex min-h-screen bg-gray-100">
+            {/* -------------------- 1. Left Sidebar -------------------- */}
             <div className="w-20 bg-gray-800 text-white flex flex-col items-center py-6 space-y-8">
                 <div className="w-6 h-6 rounded-full bg-red-500 mb-8" />
                 <div className="hover:bg-gray-700 p-2 rounded-lg cursor-pointer">
@@ -78,6 +90,7 @@ const SalesView = ({ navigateTo }) => {
                 </div>
             </div>
 
+            {/* -------------------- 2. Main Content Area -------------------- */}
             <div className="flex-grow p-6">
                 <div className="mb-6 flex space-x-4">
                     <button 
@@ -88,6 +101,7 @@ const SalesView = ({ navigateTo }) => {
                         <span>Add Product</span> 
                     </button>
                     
+                    {/* ปุ่ม Edit Product - ถ้าคลิกแล้ว ควรเปิด Modal หรือใช้ Logic เลือกสินค้า */}
                     <button className="flex items-center space-x-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg shadow-md transition duration-200">
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M11.492 15.659a1.5 1.5 0 01-2.984 0L8.136 5.51a1.5 1.5 0 012.728 0l.628 10.149zM10 2a1 1 0 100 2h.01a1 1 0 100-2H10z" clipRule="evenodd" /></svg>
                         <span>Edit Product</span>
@@ -117,9 +131,15 @@ const SalesView = ({ navigateTo }) => {
                     ))}
                 </div>
 
+                {/* -------------------- Product Grid - UPDATED -------------------- */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                     {filteredProducts.map(product => (
-                        <div key={product._id} className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
+                        <div 
+                            key={product._id} 
+                            // เมื่อคลิกที่ Product Card จะนำทางไปหน้าแก้ไขพร้อมส่ง ID
+                            onClick={() => navigateTo('edit_product', product._id)}
+                            className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col cursor-pointer hover:shadow-xl transition duration-150"
+                        >
                             <div className="bg-gray-200 h-32 flex items-center justify-center">
                                 <span className="text-gray-500 text-xs">Image</span>
                             </div>
@@ -132,8 +152,9 @@ const SalesView = ({ navigateTo }) => {
                                     <span className="text-xl font-bold text-green-600">
                                         {product.price.toFixed(2)} ฿
                                     </span>
+                                    {/* ใช้ handleAddClick เพื่อป้องกันการคลิกซ้อนทับกัน */}
                                     <button 
-                                        onClick={() => addToCart(product)}
+                                        onClick={(e) => handleAddClick(e, product)}
                                         disabled={product.stock < 1}
                                         className="bg-green-500 text-white rounded-full p-1.5 hover:bg-green-600 disabled:bg-gray-400"
                                     >
@@ -147,6 +168,7 @@ const SalesView = ({ navigateTo }) => {
                 </div>
             </div>
 
+            {/* -------------------- 3. Right Sidebar (Order Summary/Cart) -------------------- */}
             <div className="w-96 bg-white p-6 shadow-xl flex flex-col">
                 <h2 className="text-2xl font-bold mb-6">Order</h2>
                 

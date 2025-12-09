@@ -56,6 +56,57 @@ app.get('/api/products', async (req, res) => {
     }
 });
 
+app.get('/api/products/:id', async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        
+        if (!product) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'ไม่พบสินค้าที่ต้องการแก้ไข' 
+            });
+        }
+        
+        res.status(200).json({ 
+            success: true, 
+            data: product 
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            success: false, 
+            error: error.message 
+        });
+    }
+});
+
+app.put('/api/products/:id', async (req, res) => {
+    try {
+        const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+            new: true, 
+            runValidators: true 
+        });
+
+        if (!product) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'ไม่พบสินค้าที่ต้องการแก้ไข' 
+            });
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            data: product, 
+            message: 'สินค้าถูกอัปเดตเรียบร้อยแล้ว' 
+        });
+    } catch (error) {
+        res.status(400).json({ 
+            success: false, 
+            error: error.message 
+        });
+    }
+});
+
+
 connectDB();
 
 app.get('/', (req, res) => {
