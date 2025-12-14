@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
 // Component สำหรับหน้าแก้ไขสินค้า
-const EditProductForm = ({ navigateTo, productId }) => {
-    // State สำหรับเก็บข้อมูลสินค้าปัจจุบัน
+const ProductEditPage = ({ navigateTo, productId = 'MOCK_ID_1' }) => {
+    
     const [formData, setFormData] = useState({
         product_name: '',
         cost: 0,
@@ -11,27 +11,26 @@ const EditProductForm = ({ navigateTo, productId }) => {
         category: 'All', 
     });
     
-    // State สำหรับรูปภาพ
-    const [imageFile, setImageFile] = useState(null); // เก็บไฟล์รูปภาพใหม่ที่ผู้ใช้อัปโหลด
-    const [existingImageName, setExistingImageName] = useState(''); // 🚨 อัปเดต: ให้ค่าเริ่มต้นเป็นสตริงว่าง
-    const [imagePreviewUrl, setImagePreviewUrl] = useState(''); // URL สำหรับแสดงตัวอย่างรูปภาพ
+    const [imageFile, setImageFile] = useState(null); 
+    const [existingImageName, setExistingImageName] = useState(''); 
+    const [imagePreviewUrl, setImagePreviewUrl] = useState(''); 
     
-    // State สำหรับ Profit Radio และราคาแนะนำ
-    const profitOptions = [5, 10, 15, 20]; // ใช้เป็น %
+    const profitOptions = [5, 10, 15, 20]; 
     const [profitPercentage, setProfitPercentage] = useState(10); 
-    const [suggestedPrice, setSuggestedPrice] = useState(''); // ราคาแนะนำ
+    const [suggestedPrice, setSuggestedPrice] = useState(''); 
     
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [message, setMessage] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false); 
 
     const API_URL = 'http://localhost:3000/api/products';
-    // 🚀 NEW: Base URL สำหรับรูปภาพ
     const BASE_UPLOAD_URL = 'http://localhost:3000/uploads/';
     const DEFAULT_PLACEHOLDER_TEXT = 'Click to Add Picture';
 
+    const FORM_WIDTH_CLASSES = 'w-11/12 sm:w-4/5 lg:w-3/5 max-w-3xl'; 
+    const INPUT_STYLE = 'w-full bg-[#dddddd] border-none rounded-[18px] px-[24px] py-[16px] text-[22px] text-[#444] font-normal outline-none placeholder:text-[#888] box-border';
 
-    // ฟังก์ชันคำนวณราคาขายตาม Profit Ratio
     const calculatePrice = (currentCost, currentProfitPercentage) => {
         const costValue = parseFloat(currentCost);
         const profitPct = parseFloat(currentProfitPercentage);
@@ -44,7 +43,6 @@ const EditProductForm = ({ navigateTo, productId }) => {
         return '';
     };
 
-    // 1. ดึงข้อมูลสินค้าเดิมเมื่อ Component ถูกโหลด
     useEffect(() => {
         if (!productId) {
             setError('Error: No product ID provided for editing.');
@@ -54,13 +52,43 @@ const EditProductForm = ({ navigateTo, productId }) => {
 
         const fetchProductData = async () => {
             try {
+                if (productId === 'MOCK_ID_1') {
+                     const productData = {
+                        product_name: 'Premium Coffee Blend',
+                        cost: 150.00,
+                        price: 180.00,
+                        stock: 50,
+                        category: 'Drinks',
+                        image: 'coffee_mock.jpg'
+                    };
+                    
+                    let closestProfit = 10;
+                    if (productData.cost > 0 && productData.price > 0) {
+                        const currentProfitRatio = ((productData.price - productData.cost) / productData.cost) * 100; 
+                        closestProfit = profitOptions.reduce((prev, curr) => 
+                            Math.abs(curr - currentProfitRatio) < Math.abs(prev - currentProfitRatio) ? curr : prev
+                        );
+                    }
+                    setProfitPercentage(closestProfit);
+                    setExistingImageName(productData.image || ''); 
+                    
+                    setFormData({
+                        product_name: productData.product_name || '',
+                        cost: productData.cost || 0,
+                        price: productData.price ? productData.price.toString() : '',
+                        stock: productData.stock || 0,
+                        category: productData.category || 'All',
+                    });
+                    setLoading(false);
+                    return;
+                }
+                
                 const response = await fetch(`${API_URL}/${productId}`);
                 const result = await response.json();
 
                 if (response.ok && result.success) {
                     const productData = result.data;
                     
-                    // Logic คำนวณ closestProfit เหมือนเดิม
                     let closestProfit = 10;
                     if (productData.cost > 0 && productData.price > 0) {
                         const currentProfitRatio = ((productData.price - productData.cost) / productData.cost) * 100;
@@ -71,9 +99,7 @@ const EditProductForm = ({ navigateTo, productId }) => {
                         }
                     }
                     setProfitPercentage(closestProfit);
-
-                    // 🚀 UPDATED: โหลดชื่อรูปภาพเดิม
-                    setExistingImageName(productData.image || ''); // เก็บชื่อไฟล์
+                    setExistingImageName(productData.image || ''); 
                     
                     setFormData({
                         product_name: productData.product_name || '',
@@ -95,16 +121,14 @@ const EditProductForm = ({ navigateTo, productId }) => {
         fetchProductData();
     }, [productId]);
 
-    // 2. useEffect สำหรับคำนวณราคาแนะนำเมื่อ Cost หรือ Profit Ratio เปลี่ยน
     useEffect(() => {
         const calculatedPrice = calculatePrice(formData.cost, profitPercentage);
         setSuggestedPrice(calculatedPrice);
     }, [formData.cost, profitPercentage]);
 
-    // 3. Handle input changes (Product Name, Cost, Stock, Category)
     const handleChange = (e) => {
         const { name, value } = e.target;
-        const finalValue = name === 'cost' || name === 'stock' ? parseFloat(value) || 0 : value;
+        const finalValue = name === 'cost' || name === 'stock' ? (value === '' ? '' : parseFloat(value) || 0) : value;
         
         setFormData(prev => ({
             ...prev,
@@ -112,7 +136,6 @@ const EditProductForm = ({ navigateTo, productId }) => {
         }));
     };
     
-    // 4. Handle Price Change (ผู้ใช้กำหนดเอง)
     const handlePriceChange = (e) => {
         setFormData(prev => ({
             ...prev,
@@ -120,17 +143,14 @@ const EditProductForm = ({ navigateTo, productId }) => {
         }));
     };
 
-    // 5. Handle profit change (คำนวณเฉพาะราคาแนะนำ)
     const handleProfitChange = (pct) => {
         setProfitPercentage(pct);
     };
     
-    // 🚀 NEW: Handle Image File Change
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             setImageFile(file);
-            // สร้าง URL สำหรับแสดงตัวอย่าง
             setImagePreviewUrl(URL.createObjectURL(file)); 
         } else {
             setImageFile(null);
@@ -138,7 +158,6 @@ const EditProductForm = ({ navigateTo, productId }) => {
         }
     };
 
-    // 6. Handle form submission (Update Function)
     const handleUpdate = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -151,41 +170,45 @@ const EditProductForm = ({ navigateTo, productId }) => {
             return;
         }
 
-        // 🚀 NEW: สร้าง FormData เพื่อรองรับการส่งไฟล์
         const updateData = new FormData();
         
-        // 1. เพิ่มข้อมูลสินค้า
         updateData.append('product_name', formData.product_name);
         updateData.append('cost', formData.cost);
         updateData.append('price', finalPrice);
         updateData.append('stock', formData.stock);
         updateData.append('category', formData.category);
 
-        // 2. เพิ่มไฟล์รูปภาพใหม่ (ถ้ามีการอัปโหลดใหม่)
         if (imageFile) {
-            // หากมีการอัปโหลดไฟล์ใหม่ ให้ส่งไฟล์ไป
             updateData.append('image', imageFile);
         } else {
-            // หากไม่มีการอัปโหลดไฟล์ใหม่ และมีรูปเดิมอยู่ ให้ส่งชื่อไฟล์เดิมไป
             updateData.append('existingImageName', existingImageName); 
         }
 
         try {
-            // 🚨 สำคัญ: เมื่อส่ง FormData ไม่ต้องกำหนด Content-Type: application/json
+            if (productId === 'MOCK_ID_1') {
+                setTimeout(() => {
+                    setLoading(false);
+                    setMessage('✅ Product (Mock ID) updated successfully!');
+                    setExistingImageName(imageFile ? imageFile.name : existingImageName); 
+                    setImageFile(null); 
+                    setImagePreviewUrl(''); 
+                    setTimeout(() => navigateTo('sales'), 1500);
+                }, 1500);
+                return;
+            }
+
             const response = await fetch(`${API_URL}/${productId}`, {
                 method: 'PUT',
-                body: updateData, // ใช้ FormData
+                body: updateData,
             });
 
             const result = await response.json();
 
             if (response.ok && result.success) {
                 setMessage('✅ Product updated successfully!');
-                // 🚀 NEW: อัปเดตชื่อรูปภาพเดิม ถ้า Server ส่งชื่อใหม่กลับมา
                 setExistingImageName(result.data.image || existingImageName);
-                setImageFile(null); // เคลียร์ไฟล์ที่ถูกอัปโหลด
-                setImagePreviewUrl(''); // เคลียร์ Preview
-                
+                setImageFile(null); 
+                setImagePreviewUrl(''); 
                 setTimeout(() => navigateTo('sales'), 1500); 
             } else {
                 setMessage(`❌ Update failed: ${result.error}`);
@@ -194,21 +217,26 @@ const EditProductForm = ({ navigateTo, productId }) => {
         } catch (err) {
             setMessage('❌ Network Error: Failed to connect or update product.');
         } finally {
-            setLoading(false);
+            if (productId !== 'MOCK_ID_1') setLoading(false); 
         }
     };
     
-    // 7. Handle Delete
     const handleDelete = async () => {
-        if (!window.confirm("Are you sure you want to delete this product?")) return;
+        if (!window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบสินค้า "${formData.product_name}"?`)) return;
 
-        setLoading(true);
+        setIsDeleting(true);
         setMessage('');
         
         try {
-            const response = await fetch(`${API_URL}/${productId}`, {
-                method: 'DELETE',
-            });
+            if (productId === 'MOCK_ID_1') {
+                setTimeout(() => {
+                    setMessage('🗑️ Product (Mock ID) deleted successfully!');
+                    setTimeout(() => navigateTo('sales'), 1500);
+                }, 1500);
+                return;
+            }
+
+            const response = await fetch(`${API_URL}/${productId}`, { method: 'DELETE' });
             
             if (response.status === 204 || (response.ok && response.status === 200)) {
                 setMessage('🗑️ Product deleted successfully!');
@@ -220,219 +248,236 @@ const EditProductForm = ({ navigateTo, productId }) => {
         } catch (err) {
             setMessage('❌ Network Error: Failed to delete product.');
         } finally {
-            setLoading(false);
+             if (productId !== 'MOCK_ID_1') setIsDeleting(false);
         }
     };
     
-    // คำนวณกำไรปัจจุบันเพื่อแสดงผล
     const currentCost = parseFloat(formData.cost) || 0;
     const actualPrice = parseFloat(formData.price) || 0;
     const actualProfitAmount = actualPrice - currentCost;
     const actualProfitRatio = currentCost > 0 ? (actualProfitAmount / currentCost) * 100 : 0;
     const isLoss = actualProfitAmount < 0 && actualPrice > 0;
 
-    // 🚀 NEW: กำหนด URL ที่จะใช้แสดงผล
     const displayImageUrl = imagePreviewUrl 
-        ? imagePreviewUrl // รูปใหม่ที่ผู้ใช้เพิ่งเลือก
+        ? imagePreviewUrl 
         : existingImageName 
-            ? `${BASE_UPLOAD_URL}${existingImageName}` // รูปเดิมที่อยู่ใน Server
-            : null; // ไม่มีรูปเลย
+            ? `${BASE_UPLOAD_URL}${existingImageName}` 
+            : null;
 
-    // 🚀 NEW: Text ที่จะแสดงใน Overlay
     const overlayText = imageFile ? imageFile.name : (existingImageName ? 'Click to Change Picture' : DEFAULT_PLACEHOLDER_TEXT);
-    const currentImageNameDisplay = existingImageName ? existingImageName : 'None';
 
 
-    if (loading && !formData.product_name) return <div className="p-8 text-center text-xl">Loading product details...</div>;
-    if (error) return <div className="p-8 text-center text-xl text-red-600">{error}</div>;
+    if (loading && !formData.product_name) {
+        return (
+            <div className="flex justify-center items-center min-h-screen pt-10 pb-10 font-varela bg-gray-50">
+                <div className="text-xl text-gray-600">Loading product details...</div>
+            </div>
+        );
+    }
+    
+    if (error) {
+         return (
+            <div className="flex justify-center items-center min-h-screen pt-10 pb-10 font-varela bg-gray-50">
+                <div className="text-xl text-red-600 p-8 bg-white shadow-xl rounded-xl">{error}</div>
+            </div>
+        );
+    }
 
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-200">
-            <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
-                <h1 className="text-3xl font-bold mb-6 text-gray-800">Edit Product: {formData.product_name}</h1>
-                <button 
-                    onClick={() => navigateTo('sales')} 
-                    className="mb-6 px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150"
+        <div className="flex justify-center items-center min-h-screen pt-10 pb-10 font-varela bg-gray-50">
+            <form onSubmit={handleUpdate} className={`${FORM_WIDTH_CLASSES} p-10 bg-white shadow-2xl rounded-xl space-y-7`}>
+                
+                {/* --- HEADER (เหลือแค่ชื่อสินค้า) --- */}
+                <div className="flex justify-start items-center mb-6">
+                    <h2 className="text-3xl font-bold text-gray-800">Edit Product: {formData.product_name}</h2>
+                </div>
+                {/* ---------------------------------- */}
+                
+                {/* Image Upload Area */}
+                <div 
+                    className="w-full aspect-[4/3] border-3 border-dashed border-gray-400 rounded-[13px] 
+                               flex flex-col items-center justify-center relative overflow-hidden mx-auto" 
+                    style={{ maxWidth: '500px' }} 
                 >
-                    &larr; Back to Sales
-                </button>
-
-                {message && (
-                    <div className={`p-3 mb-4 rounded-lg text-sm ${message.startsWith('✅') || message.startsWith('🗑️') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {message}
-                    </div>
-                )}
-
-                <form onSubmit={handleUpdate}>
-                    {/* Image Upload Area 🚀 UPDATED */}
-                    <div className="mb-8">
-                        <div className="border-4 border-dashed border-gray-300 rounded-lg h-64 flex flex-col justify-center items-center cursor-pointer hover:border-green-400 transition duration-300 relative overflow-hidden">
-                            
-                            {/* Display Image Preview or Placeholder */}
-                            {displayImageUrl ? (
-                                <img 
-                                    src={displayImageUrl} 
-                                    alt="Product Preview" 
-                                    className="object-cover w-full h-full absolute"
-                                    // 🚀 NEW: จัดการกรณีที่รูปภาพเดิมโหลดไม่ได้ (ถ้ามี)
-                                    onError={(e) => { e.target.onerror = null; e.target.src=''; }}
-                                />
-                            ) : (
-                                // Placeholder เมื่อไม่มีรูปภาพเลย
-                                <div className="text-gray-500 flex flex-col items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-2" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                                    </svg>
-                                    <span>{DEFAULT_PLACEHOLDER_TEXT}</span>
-                                </div>
-                            )}
-                            
-                            {/* File Input */}
-                            <input
-                                type="file"
-                                className="hidden"
-                                onChange={handleImageChange}
-                                id="imageUpload"
-                                accept="image/*"
-                            />
-                            
-                            {/* Label for File Input (Overlay) */}
-                            <label htmlFor="imageUpload" className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-40 text-white opacity-0 hover:opacity-100 transition duration-300 cursor-pointer">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-2" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                                </svg>
-                                <span>{overlayText}</span>
-                                <span className="text-xs text-gray-300 mt-1">Current: {currentImageNameDisplay}</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Product Name */}
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">Product Name</label>
-                        <input
-                            type="text"
-                            name="product_name"
-                            value={formData.product_name}
-                            onChange={handleChange}
-                            required
-                            className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    {displayImageUrl ? (
+                        <img 
+                            src={displayImageUrl} 
+                            alt="Product Preview" 
+                            className="object-cover w-full h-full absolute"
+                            onError={(e) => { e.target.onerror = null; e.target.src=''; }}
                         />
-                    </div>
+                    ) : (
+                        <div className="text-gray-500 flex flex-col items-center">
+                            <span className="text-8xl text-gray-400" role="img" aria-label="camera">📷</span>
+                            <span className="mt-[7px] text-[22px] font-semibold text-[#222]">Add Product Picture</span>
+                        </div>
+                    )}
                     
-                    {/* Category Input Field */}
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">Category</label>
-                        <input
-                            type="text"
-                            name="category"
-                            placeholder="Category (e.g., Drinks, Snacks)"
-                            value={formData.category}
-                            onChange={handleChange}
-                            required
-                            className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        />
-                    </div>
+                    <input
+                        type="file"
+                        className="hidden"
+                        onChange={handleImageChange} 
+                        id="imageUpload"
+                        accept="image/*"
+                    />
+                    <label htmlFor="imageUpload" className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-40 text-white opacity-0 hover:opacity-100 transition duration-300 cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mb-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-[22px] font-semibold">{overlayText}</span>
+                    </label>
+                </div>
 
-                    {/* Cost and Profit */}
-                    <div className="flex items-center mb-4 space-x-4">
-                        <div className="flex-1">
-                            <label className="block text-gray-700 text-sm font-bold mb-2">Cost</label>
-                            <input
-                                type="number"
-                                name="cost"
-                                value={formData.cost}
-                                onChange={handleChange}
-                                required
-                                min="0"
-                                step="0.01"
-                                className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            />
-                        </div>
-                        
-                        <div className="flex-none pt-7">
-                            <label className="text-gray-700 text-sm font-bold mr-2">Profit :</label>
-                            {profitOptions.map(profit => (
-                                <label key={profit} className="inline-flex items-center ml-4">
-                                    <input
-                                        type="radio"
-                                        name="profit_radio"
-                                        value={profit}
-                                        checked={profitPercentage === profit}
-                                        onChange={() => handleProfitChange(profit)}
-                                        className="form-radio h-4 w-4 text-green-600"
-                                    />
-                                    <span className="ml-2 text-gray-700">{profit}%</span>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
-                    
-                    {/* Price - User Customizable + Suggestion */}
-                    <div className="mb-4 space-y-2">
-                         {/* คำแนะนำราคาจะอยู่ด้านบน */}
-                        {suggestedPrice && currentCost > 0 && (
-                            <p className="text-sm text-gray-600 p-2 bg-yellow-50 rounded-lg border border-yellow-200">
-                                💡 **แนะนำ:** หากต้องการกำไร {profitPercentage}% ควรตั้งราคา **{suggestedPrice}** บาท
-                            </p>
-                        )}
-                        
-                        <label className="block text-gray-700 text-sm font-bold mb-2">Price (Selling Price)</label>
-                        <input
-                            type="number"
-                            name="price"
-                            value={formData.price}
-                            onChange={handlePriceChange}
+                {/* Product Name */}
+                <input 
+                    type="text" 
+                    placeholder="Product Name" 
+                    name="product_name"
+                    value={formData.product_name}
+                    onChange={handleChange}
+                    required
+                    className={INPUT_STYLE} 
+                />
+                
+                {/* Category Input Field */}
+                <input
+                    type="text"
+                    name="category"
+                    placeholder="Category (e.g., Drinks, Snacks)"
+                    value={formData.category}
+                    onChange={handleChange}
+                    required
+                    className={INPUT_STYLE}
+                />
+
+                {/* Cost + Profit Group */}
+                <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-3 sm:space-y-0">
+                        {/* Cost Input (ความกว้าง 1/3) */}
+                        <input 
+                            type="number" 
+                            placeholder="Cost (ราคาทุน)"
+                            name="cost"
+                            value={formData.cost}
+                            onChange={handleChange}
                             required
                             min="0"
                             step="0.01"
-                            className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            className={`w-full sm:w-1/3 ${INPUT_STYLE.replace('w-full', '')}`} 
                         />
-                         {/* แสดงกำไรจริงของราคาที่ผู้ใช้กรอก */}
-                        {actualPrice > 0 && currentCost > 0 && (
-                            <p className={`text-sm ml-1 ${isLoss ? 'text-red-500 font-bold' : 'text-green-600'}`}>
-                                **กำไรจริง:** {actualProfitAmount.toFixed(2)} บาท ({actualProfitRatio.toFixed(2)}%)
-                                {isLoss && " (ขาดทุน!)"}
-                            </p>
-                        )}
+                        
+                        {/* Profit Radios */}
+                        <div className="flex items-center space-x-6 pl-[8px] pt-1 flex-wrap sm:flex-1">
+                            <span className="font-semibold text-[20px] text-[#444] mb-2 sm:mb-0">Profit Ratio:</span>
+                            
+                            <div className="flex items-center space-x-[20px]">
+                                {profitOptions.map((pct) => (
+                                    <label key={pct} className="text-[20px] text-[#444] font-normal flex items-center space-x-[1px] cursor-pointer">
+                                        <input 
+                                            type="radio" 
+                                            name="profit" 
+                                            value={pct} 
+                                            checked={profitPercentage === pct}
+                                            onChange={() => handleProfitChange(pct)}
+                                            className="accent-[#25823a] w-[20px] h-[20px] mr-[1px]" 
+                                        />
+                                        <span>{pct}%</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
                     </div>
+                </div>
+                
+                {/* Price Group */}
+                <div className="space-y-2">
+                    {suggestedPrice && currentCost > 0 && (
+                        <p className={`text-base text-gray-700 pl-[18px] pt-2 pb-2 bg-yellow-100 rounded-[10px] border border-yellow-300 w-full font-medium`}>
+                            💡 แนะนำ: หากต้องการกำไร {profitPercentage}% ควรตั้งราคา **{suggestedPrice}** บาท
+                        </p>
+                    )}
+                    <input 
+                        type="number" 
+                        placeholder="Price (ราคาขาย)" 
+                        name="price"
+                        value={formData.price}
+                        onChange={handlePriceChange}
+                        required
+                        min="0"
+                        step="0.01"
+                        className={INPUT_STYLE} 
+                    />
                     
-                    {/* Stock */}
-                    <div className="mb-6">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">Stock</label>
-                        <input
-                            type="number"
-                            name="stock"
-                            value={formData.stock}
-                            onChange={handleChange}
-                            required
-                            min="0"
-                            className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        />
-                    </div>
+                    {actualPrice > 0 && currentCost > 0 && (
+                        <p className={`text-base ml-1 pl-[18px] pt-1 ${isLoss ? 'text-red-600 font-bold' : 'text-green-700 font-semibold'}`}>
+                            กำไรจริง: {actualProfitAmount.toFixed(2)} บาท ({actualProfitRatio.toFixed(2)}%)
+                            {isLoss && " (ขาดทุน!)"}
+                        </p>
+                    )}
+                </div>
 
-                    {/* Buttons: Delete and Save */}
-                    <div className="flex justify-end space-x-4">
+                {/* Stock Input */}
+                <input 
+                    type="number" 
+                    placeholder="Stock" 
+                    name="stock"
+                    value={formData.stock}
+                    onChange={handleChange}
+                    required
+                    min="0"
+                    className={`${INPUT_STYLE} mb-4`} 
+                />
+                    
+                {/* Action Buttons Group: Delete / Save / Cancel */}
+                <div className="flex justify-between items-center pt-4">
+                    
+                    {/* Delete Button (ซ้าย) */}
+                    <button
+                        type="button" 
+                        onClick={handleDelete}
+                        disabled={loading || isDeleting}
+                        className="text-white text-[20px] font-medium px-8 py-4 border-none rounded-[20px] cursor-pointer 
+                                   font-varela transition duration-200 shadow-md 
+                                   bg-red-700 hover:bg-red-800 disabled:bg-red-400 disabled:cursor-not-allowed"
+                    >
+                        {isDeleting ? 'Deleting...' : 'Delete'}
+                    </button>
+                    
+                    <div className="flex space-x-4">
+                        {/* Cancel Button */}
                         <button
-                            type="button"
-                            onClick={handleDelete}
-                            disabled={loading}
-                            className={`bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition duration-200 ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-700'}`}
+                            type="button" 
+                            onClick={() => navigateTo && navigateTo('sales')} 
+                            disabled={loading || isDeleting}
+                            className="text-gray-700 text-[20px] font-medium px-10 py-4 border-none rounded-[20px] cursor-pointer 
+                                        font-varela transition duration-200 bg-gray-200 hover:bg-gray-300 shadow-md disabled:opacity-50"
                         >
-                            Delete
+                            Cancel
                         </button>
-                        <button
+
+                        {/* Save Button (ขวา) */}
+                        <button 
                             type="submit"
-                            disabled={loading || !formData.product_name || !formData.cost || !formData.price || !formData.stock}
-                            className={`bg-green-600 text-white font-bold py-2 px-6 rounded-lg transition duration-200 ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-700'}`}
+                            disabled={loading || isDeleting || !formData.product_name || !formData.cost || !formData.price || !formData.stock}
+                            className={`text-white text-[20px] font-medium 
+                                    px-10 py-4 border-none rounded-[20px] cursor-pointer 
+                                    font-varela transition duration-200 shadow-md
+                                    ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#25823a] hover:bg-[#166534]'}`}
                         >
                             {loading ? 'Saving...' : 'Save'}
                         </button>
                     </div>
-                </form>
-            </div>
+                </div>
+                
+                {/* Message Area */}
+                {message && (
+                    <div className={`p-4 rounded-lg text-base w-full mt-4 text-center font-medium ${message.startsWith('✅') || message.startsWith('🗑️') ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-red-100 text-red-700 border border-red-300'}`}>
+                        {message}
+                    </div>
+                )}
+            </form>
         </div>
     );
-};
+}
 
-export default EditProductForm;
+export default ProductEditPage;
