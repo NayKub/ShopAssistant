@@ -1,4 +1,4 @@
-// server.js (อัปเดตเพื่อรองรับ File Upload ด้วย Multer และ Checkout API)
+// server.js (อัปเดตเพื่อรองรับ File Upload, Checkout, Permanent Delete และ Restock API)
 
 import express from 'express';
 import mongoose from 'mongoose';
@@ -66,6 +66,62 @@ const connectDB = async () => {
 // ----------------------------------------------------------------
 // 🚀 API Endpoints ที่ได้รับการอัปเดต
 // ----------------------------------------------------------------
+
+// 🆕 NEW API: POST /api/products/restock/:id - เพิ่ม Stock จริงใน Database
+app.post('/api/products/restock/:id', async (req, res) => {
+    const { amount } = req.body;
+    const productId = req.params.id;
+    const restockAmount = parseInt(amount, 10);
+
+    if (isNaN(restockAmount) || restockAmount <= 0) {
+        return res.status(400).json({ success: false, message: 'จำนวนเติม Stock ไม่ถูกต้อง' });
+    }
+
+    try {
+        // ใช้ $inc เพื่อเพิ่มค่า stock ในฐานข้อมูล
+        const updatedProduct = await Product.findByIdAndUpdate(
+            productId,
+            { $inc: { stock: restockAmount } },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedProduct) {
+            return res.status(404).json({ success: false, message: 'ไม่พบสินค้าที่ต้องการเติม Stock' });
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            data: updatedProduct, 
+            message: `เติม Stock สำเร็จ: เพิ่ม ${restockAmount} ชิ้น` 
+        });
+
+    } catch (error) {
+        res.status(500).json({ 
+            success: false, 
+            message: 'เกิดข้อผิดพลาดในการเติม Stock',
+            error: error.message 
+        });
+    }
+});
+
+
+// 🆕 NEW API: DELETE /api/products/permanent/:id - ลบสินค้าออกจาก Database ถาวร
+app.delete('/api/products/permanent/:id', async (req, res) => {
+    try {
+        const product = await Product.findByIdAndDelete(req.params.id);
+
+        if (!product) {
+            return res.status(404).json({ success: false, error: 'ไม่พบสินค้าที่ต้องการลบ' });
+        }
+
+        // ในโลกจริง อาจต้องลบไฟล์รูปภาพออกจากเซิร์ฟเวอร์ด้วย
+
+        res.status(204).json({ success: true, data: {}, message: 'สินค้าถูกลบอย่างถาวรแล้ว' });
+    } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+});
+
 
 // POST /api/checkout - ยืนยันการขาย (เพิ่ม sold_count เท่านั้น, Stock คงที่)
 app.post('/api/checkout', async (req, res) => {
@@ -208,20 +264,8 @@ app.put('/api/products/:id', (req, res) => {
     });
 });
 
-// DELETE /api/products/:id
-app.delete('/api/products/:id', async (req, res) => {
-    try {
-        const product = await Product.findByIdAndDelete(req.params.id);
-
-        if (!product) {
-            return res.status(404).json({ success: false, error: 'ไม่พบสินค้าที่ต้องการลบ' });
-        }
-
-        res.status(204).json({ success: true, data: {}, message: 'สินค้าถูกลบเรียบร้อยแล้ว' });
-    } catch (error) {
-        res.status(400).json({ success: false, error: error.message });
-    }
-});
+// DELETE /api/products/:id (API เดิมสำหรับลบชั่วคราว/ยกเลิก) - เปลี่ยนชื่อเป็น Permanent Delete ด้านบน
+// app.delete('/api/products/:id', async (req, res) => { ... });
 
 connectDB();
 
