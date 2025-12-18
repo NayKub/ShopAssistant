@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const ProductAddPage = ({ navigateTo }) => {
+    
     const [productName, setProductName] = useState('');
     const [cost, setCost] = useState('');
     const [profitPercentage, setProfitPercentage] = useState(10);
@@ -11,8 +12,61 @@ const ProductAddPage = ({ navigateTo }) => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [suggestedPrice, setSuggestedPrice] = useState(''); 
+    
+    
+    const [categories, setCategories] = useState([]); 
+    const [selectedCategory, setSelectedCategory] = useState(''); 
+    const [categoryLoading, setCategoryLoading] = useState(true);
+    
+    
 
     const profitOptions = [5, 10, 15, 20];
+    const CATEGORY_API_URL = 'http://localhost:3000/api/categories';
+    const PRODUCT_API_URL = 'http://localhost:3000/api/products';
+
+
+    const getToken = () => localStorage.getItem('userToken');
+
+    
+    const fetchCategories = useCallback(async () => {
+        setCategoryLoading(true);
+        const token = getToken();
+        if (!token) {
+            setMessage('❌ Error: Token not found. Please log in first.');
+            setCategoryLoading(false);
+            return;
+        }
+
+        try {
+            const response = await fetch(CATEGORY_API_URL, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+                setCategories(result.data);
+                if (result.data.length > 0) {
+                    
+                    if (!selectedCategory) {
+                        setSelectedCategory(result.data[0]._id);
+                    }
+                } else {
+                    setSelectedCategory('');
+                }
+            } else {
+                setMessage(`❌ Failed to fetch categories: ${result.error || result.message}`);
+            }
+        } catch (err) {
+            setMessage('❌ Network Error: Could not retrieve Category list.');
+        } finally {
+            setCategoryLoading(false);
+        }
+    }, [selectedCategory]);
+
+    useEffect(() => {
+        fetchCategories();
+    }, [fetchCategories]);
+
 
     const calculatePrice = (currentCost, currentProfitPercentage) => {
         const costValue = parseFloat(currentCost);
@@ -33,6 +87,11 @@ const ProductAddPage = ({ navigateTo }) => {
         } else {
             setSuggestedPrice('');
         }
+        
+        if (price === '' || price === calculatedPrice) {
+            setPrice(calculatedPrice);
+        }
+        
     }, [cost, profitPercentage]);
 
     const handleCostChange = (e) => {
@@ -49,6 +108,9 @@ const ProductAddPage = ({ navigateTo }) => {
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
+        if (imagePreviewUrl) {
+            URL.revokeObjectURL(imagePreviewUrl); 
+        }
         if (file) {
             setImageFile(file);
             setImagePreviewUrl(URL.createObjectURL(file)); 
@@ -58,40 +120,75 @@ const ProductAddPage = ({ navigateTo }) => {
         }
     };
 
+    useEffect(() => {
+        
+        return () => {
+            if (imagePreviewUrl) {
+                URL.revokeObjectURL(imagePreviewUrl);
+            }
+        };
+    }, [imagePreviewUrl]);
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setMessage('');
-
-        const finalPrice = parseFloat(price);
-        if (isNaN(finalPrice) || finalPrice <= 0) {
-            setMessage('❌ กรุณาใส่ราคาขายที่ถูกต้อง (ต้องมากกว่า 0)');
+        
+        const token = getToken(); 
+        
+        if (!token) {
+            setMessage('❌ Error: Token not found. Please log in first.');
             setLoading(false);
             return;
         }
         
+        if (!selectedCategory) {
+            setMessage('❌ Please select a product Category.');
+            setLoading(false);
+            return;
+        }
+
+        const finalPrice = parseFloat(price);
+        const finalCost = parseFloat(cost);
+        const finalStock = parseInt(stock);
+
+        if (isNaN(finalPrice) || finalPrice <= 0 || isNaN(finalCost) || finalCost < 0 || isNaN(finalStock) || finalStock < 0) {
+             setMessage('❌ Please check Price or Stock data (must be valid numbers).');
+            setLoading(false);
+            return;
+        }
+
+        
         const formDataToSend = new FormData();
         
         formDataToSend.append('product_name', productName);
-        formDataToSend.append('cost', parseFloat(cost));
+        formDataToSend.append('cost', finalCost);
         formDataToSend.append('price', finalPrice); 
-        formDataToSend.append('stock', parseInt(stock));
+        formDataToSend.append('stock', finalStock);
         
+        formDataToSend.append('category', selectedCategory); 
+
         if (imageFile) {
             formDataToSend.append('image', imageFile); 
         }
 
         try {
-            const response = await fetch('http://localhost:3000/api/products', {
+            const response = await fetch(PRODUCT_API_URL, {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`, 
+                },
                 body: formDataToSend, 
             });
 
             const result = await response.json();
 
             if (response.ok && result.success) { 
-                setMessage('✅ สินค้าถูกเพิ่มสำเร็จ!');
+                const categoryName = categories.find(c => c._id === result.data.category)?.name || 'N/A';
+                setMessage('✅ Product added successfully! (Category: ' + categoryName + ')');
+                
+                
                 setProductName('');
                 setCost('');
                 setProfitPercentage(10);
@@ -99,39 +196,50 @@ const ProductAddPage = ({ navigateTo }) => {
                 setStock('');
                 setImageFile(null);
                 setImagePreviewUrl(null); 
+                
+                setTimeout(() => setMessage(''), 3000);
+
+            } else if (response.status === 401) {
+                 setMessage(`❌ Error: Unauthorized (Token expired/invalid)`);
             } else {
-                setMessage(`❌ ข้อผิดพลาด: ${result.error || 'Server Error'}`);
+                setMessage(`❌ Error: ${result.error || result.message || 'Server Error'}`);
             }
 
         } catch (error) {
-            setMessage('❌ Network Error: ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+            setMessage('❌ Network Error: Could not connect to the server.');
         } finally {
             setLoading(false);
         }
     };
 
+    
     const currentCost = parseFloat(cost) || 0;
     const actualPrice = parseFloat(price) || 0;
     const actualProfitAmount = actualPrice - currentCost;
     const actualProfitRatio = currentCost > 0 ? (actualProfitAmount / currentCost) * 100 : 0;
     const isLoss = actualProfitAmount < 0 && actualPrice > 0;
     
+    
     const FORM_WIDTH_CLASSES = 'w-11/12 sm:w-4/5 lg:w-3/5 max-w-3xl'; 
     const INPUT_STYLE = `w-full bg-[#dddddd] border-none rounded-[18px] 
                        px-[24px] py-[16px] text-[22px] text-[#444] font-normal outline-none 
                        placeholder:text-[#888] box-border`;
+    
+    const SELECT_STYLE = `${INPUT_STYLE} appearance-none cursor-pointer`; 
+    const BUTTON_PRIMARY = 'text-white text-[20px] font-medium px-10 py-4 border-none rounded-[20px] cursor-pointer font-varela transition duration-200 shadow-md';
+    const BUTTON_SECONDARY = 'text-gray-700 text-[20px] font-medium px-10 py-4 border-none rounded-[20px] cursor-pointer font-varela transition duration-200 bg-gray-200 hover:bg-gray-300 shadow-md';
+
 
     return (
         <div className="flex justify-center items-center min-h-screen pt-10 pb-10 font-varela bg-gray-50">
             <form onSubmit={handleSubmit} className={`${FORM_WIDTH_CLASSES} p-10 bg-white shadow-2xl rounded-xl space-y-7`}>
                 
-                {/* --- HEADER (จัดชิดซ้าย) --- */}
+                
                 <div className="flex justify-start items-center mb-6">
                     <h2 className="text-3xl font-bold text-gray-800">Add New Product</h2>
                 </div>
-                {/* --------------------------- */}
                 
-                {/* Image Upload Area */}
+                
                 <div 
                     className="w-full aspect-[4/3] border-3 border-dashed border-gray-400 rounded-[13px] 
                                flex flex-col items-center justify-center relative overflow-hidden mx-auto" 
@@ -165,7 +273,7 @@ const ProductAddPage = ({ navigateTo }) => {
                     </label>
                 </div>
 
-                {/* Product Name */}
+                
                 <input 
                     type="text" 
                     placeholder="Product Name" 
@@ -174,13 +282,45 @@ const ProductAddPage = ({ navigateTo }) => {
                     required
                     className={INPUT_STYLE} 
                 />
-
-                {/* Cost + Profit Group */}
+                
+                
                 <div className="space-y-3">
-                    {/* Cost Input (เต็มความกว้าง) */}
+                    <div className="relative">
+                        {categoryLoading ? (
+                            <select className={SELECT_STYLE} disabled>
+                                <option>Loading Categories...</option>
+                            </select>
+                        ) : categories.length === 0 ? (
+                            <select className={`${SELECT_STYLE} bg-red-100 text-red-700`} disabled>
+                                <option value="">❌ No Categories Found</option>
+                            </select>
+                        ) : (
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                                required
+                                className={SELECT_STYLE}
+                            >
+                                {categories.map((cat) => (
+                                    <option key={cat._id} value={cat._id}>
+                                        {cat.name}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-700">
+                            <svg className="fill-current h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                    </div>
+                </div>
+
+
+                
+                <div className="space-y-3">
+                    
                     <input 
                         type="number" 
-                        placeholder="Cost (ราคาทุน)"
+                        placeholder="Cost Price"
                         value={cost}
                         onChange={handleCostChange}
                         required
@@ -189,7 +329,7 @@ const ProductAddPage = ({ navigateTo }) => {
                         className={INPUT_STYLE} 
                     />
                     
-                    {/* Profit Radios */}
+                    
                     <div className="flex items-center space-x-6 pl-[8px] pt-1 flex-wrap">
                         <span className="font-semibold text-[20px] text-[#444] mb-2 sm:mb-0">Profit Ratio:</span>
                         
@@ -211,16 +351,16 @@ const ProductAddPage = ({ navigateTo }) => {
                     </div>
                 </div>
                 
-                {/* Price Group */}
+                
                 <div className="space-y-2">
                     {suggestedPrice && currentCost > 0 && (
                         <p className={`text-base text-gray-700 pl-[18px] pt-2 pb-2 bg-yellow-100 rounded-[10px] border border-yellow-300 w-full font-medium`}>
-                            💡 แนะนำ: หากต้องการกำไร {profitPercentage}% ควรตั้งราคา **{suggestedPrice}** บาท
+                            💡 Suggestion: For {profitPercentage}% profit, set the price at **{suggestedPrice}** Baht
                         </p>
                     )}
                     <input 
                         type="number" 
-                        placeholder="Price (ราคาขาย)" 
+                        placeholder="Selling Price" 
                         value={price}
                         onChange={handlePriceChange}
                         required
@@ -231,13 +371,13 @@ const ProductAddPage = ({ navigateTo }) => {
                     
                     {actualPrice > 0 && currentCost > 0 && (
                         <p className={`text-base ml-1 pl-[18px] pt-1 ${isLoss ? 'text-red-600 font-bold' : 'text-green-700 font-semibold'}`}>
-                            กำไรจริง: {actualProfitAmount.toFixed(2)} บาท ({actualProfitRatio.toFixed(2)}%)
-                            {isLoss && " (ขาดทุน!)"}
+                            Actual Profit: {actualProfitAmount.toFixed(2)} Baht ({actualProfitRatio.toFixed(2)}%)
+                            {isLoss && " (Loss!)"}
                         </p>
                     )}
                 </div>
 
-                {/* Stock Input */}
+                
                 <input 
                     type="number" 
                     placeholder="Stock" 
@@ -248,34 +388,34 @@ const ProductAddPage = ({ navigateTo }) => {
                     className={`${INPUT_STYLE} mb-4`} 
                 />
                     
-                {/* Action Buttons Group (จัด Cancel ซ้าย, Add Product ขวา) */}
+                
                 <div className="flex justify-between items-center pt-4">
                     
-                    {/* Cancel Button (อยู่ซ้าย) */}
+                    
                     <button
                         type="button" 
                         onClick={() => navigateTo && navigateTo('sales')} 
-                        className="text-gray-700 text-[20px] font-medium 
-                                   px-10 py-4 border-none rounded-[20px] cursor-pointer 
-                                   font-varela transition duration-200 bg-gray-200 hover:bg-gray-300 shadow-md"
+                        className={BUTTON_SECONDARY}
                     >
                         Cancel
                     </button>
                     
-                    {/* Add Product Button (อยู่ขวา) */}
+                    
                     <button 
                         type="submit"
-                        disabled={loading || !productName || !cost || !price || !stock}
-                        className={`text-white text-[20px] font-medium 
-                                   px-10 py-4 border-none rounded-[20px] cursor-pointer 
-                                   font-varela transition duration-200 shadow-md
-                                   ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#25823a] hover:bg-[#166534]'}`}
+                        
+                        disabled={loading || categoryLoading || !selectedCategory || !productName || !cost || !price || !stock} 
+                        className={`${BUTTON_PRIMARY} ${
+                            (loading || categoryLoading || !selectedCategory || !productName || !cost || !price || !stock) 
+                            ? 'bg-gray-400 cursor-not-allowed' 
+                            : 'bg-[#25823a] hover:bg-[#166534]'}`
+                        }
                     >
                         {loading ? 'Adding Product...' : 'Add Product'}
                     </button>
                 </div>
 
-                {/* Message Area */}
+                
                 {message && (
                     <div className={`p-4 rounded-lg text-base w-full mt-4 text-center font-medium ${message.startsWith('✅') ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-red-100 text-red-700 border border-red-300'}`}>
                         {message}
