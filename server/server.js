@@ -255,6 +255,32 @@ app.post('/api/categories', protect, async (req, res) => {
     }
 });
 
+// DELETE /api/categories/:id - ลบ Category
+app.delete('/api/categories/:id', protect, async (req, res) => {
+    try {
+        // ตรวจสอบว่ามี Category นี้และเป็นของร้านตัวเองจริงไหม
+        const category = await Category.findOneAndDelete({ 
+            _id: req.params.id, 
+            store_id: req.storeId 
+        });
+
+        if (!category) {
+            return res.status(404).json({ success: false, message: 'ไม่พบ Category ที่ต้องการลบ' });
+        }
+
+        // 💡 เพิ่มเติม: คุณอาจจะอยากเช็คก่อนลบว่ามีสินค้าไหนใช้ Category นี้อยู่ไหม
+        // เพื่อป้องกันปัญหาข้อมูลหลุดลอย (Orphaned Data)
+        await Product.updateMany(
+            { category: req.params.id, store_id: req.storeId },
+            { $unset: { category: "" } } // หรือเซ็ตเป็น null
+        );
+
+        res.status(200).json({ success: true, message: 'ลบ Category เรียบร้อยแล้ว' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 
 // ----------------------------------------------------------------
 // 🚀 API Endpoints: Products (Updated for Category ID)
@@ -469,7 +495,6 @@ app.put('/api/products/:id', protect, (req, res) => {
         }
     });
 });
-
 
 connectDB();
 
