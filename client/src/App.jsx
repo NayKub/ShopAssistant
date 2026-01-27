@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import HomePage from './pages/HomePage';
 import LoginView from './pages/LoginView';       
 import RegisterView from './pages/RegisterView'; 
 import SalesView from './pages/SalesView';       
@@ -7,12 +8,13 @@ import EditProductForm from './pages/EditProductForm';
 import SettingsPage from './pages/SettingsPage';
 
 const VIEWS = {
+    HOME: 'home',
     REGISTER: 'register',
     LOGIN: 'login',
     SALES: 'sales',
     ADD_PRODUCT: 'add_product',
     EDIT_PRODUCT: 'edit_product',
-    SETTINGS: 'settings', // 🆕 เพิ่ม View สำหรับ Settings
+    SETTINGS: 'settings', 
 };
 
 const checkAuthStatus = () => {
@@ -20,11 +22,17 @@ const checkAuthStatus = () => {
 };
 
 function App() {
-    const initialView = checkAuthStatus() ? VIEWS.SALES : VIEWS.REGISTER;
+    const initialView = checkAuthStatus() ? VIEWS.SALES : VIEWS.HOME;
     const [currentView, setCurrentView] = useState(initialView);
     const [editingProductId, setEditingProductId] = useState(null); 
     
     const navigateTo = (viewName, productId = null) => {
+        if (viewName === 'logout') {
+            localStorage.removeItem('userToken');
+            localStorage.removeItem('storeId');
+            setCurrentView(VIEWS.HOME);
+            return;
+        }
         setEditingProductId(productId); 
         setCurrentView(viewName);
     };
@@ -35,6 +43,8 @@ function App() {
     
     const renderView = () => {
         switch (currentView) {
+            case VIEWS.HOME:
+                return <HomePage navigateTo={navigateTo} />;
             case VIEWS.REGISTER:
                 return <RegisterView navigateTo={navigateTo} />; 
             case VIEWS.LOGIN:
@@ -45,7 +55,7 @@ function App() {
                 return <AddProductForm navigateTo={navigateTo} />;
             case VIEWS.EDIT_PRODUCT:
                 return <EditProductForm navigateTo={navigateTo} productId={editingProductId} />; 
-            case VIEWS.SETTINGS: // 🆕 Case สำหรับหน้า Settings
+            case VIEWS.SETTINGS:
                 return <SettingsPage navigateTo={navigateTo} />;
             default:
                 return <div className="p-8 text-red-600 text-center">404 Not Found</div>;
