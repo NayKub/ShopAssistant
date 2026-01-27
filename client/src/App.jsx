@@ -6,11 +6,13 @@ import SalesView from './pages/SalesView';
 import AddProductForm from './pages/AddProductForm'; 
 import EditProductForm from './pages/EditProductForm';
 import SettingsPage from './pages/SettingsPage';
+import AboutUs from './pages/AboutUs';
 
 const VIEWS = {
     HOME: 'home',
     REGISTER: 'register',
     LOGIN: 'login',
+    ABOUT_US: 'about', // เพิ่ม VIEW สำหรับ About Us
     SALES: 'sales',
     ADD_PRODUCT: 'add_product',
     EDIT_PRODUCT: 'edit_product',
@@ -44,7 +46,9 @@ function App() {
     const renderView = () => {
         switch (currentView) {
             case VIEWS.HOME:
-                return <HomePage navigateTo={navigateTo} />;
+                return <HomePage navigateTo={navigateTo} currentView={currentView} />;
+            case VIEWS.ABOUT_US:
+                return <AboutUs navigateTo={navigateTo} />; // เพิ่มหน้า AboutUs ใน Switch Case
             case VIEWS.REGISTER:
                 return <RegisterView navigateTo={navigateTo} />; 
             case VIEWS.LOGIN:
