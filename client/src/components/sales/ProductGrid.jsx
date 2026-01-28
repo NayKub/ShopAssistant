@@ -1,29 +1,34 @@
 import React from 'react';
+import { useTheme } from '../../context/ThemeContext';
 import ProductCard from './ProductCard'; 
 
 const ProductGrid = ({ products, onAddToCart, isLoading, viewMode, getAvailableStock, cartItems, onRemoveAll, onRefillStock, navigateTo }) => {
+  const { isDarkMode } = useTheme();
+
   const customScrollbar = `
     .product-grid-custom-scroll::-webkit-scrollbar {
         width: 8px;
     }
     .product-grid-custom-scroll::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: ${isDarkMode ? '#1e1e1e' : '#f1f1f1'};
         border-radius: 4px;
     }
     .product-grid-custom-scroll::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
+        background: ${isDarkMode ? '#444' : '#c1c1c1'};
         border-radius: 4px;
         transition: background 0.2s ease;
     }
     .product-grid-custom-scroll::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
+        background: ${isDarkMode ? '#555' : '#a8a8a8'};
     }
   `;
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="text-lg text-gray-600 p-5">Loading products...</div>
+        <div className={`text-lg p-5 transition-colors ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          Loading products...
+        </div>
       </div>
     );
   }
@@ -31,10 +36,14 @@ const ProductGrid = ({ products, onAddToCart, isLoading, viewMode, getAvailableS
   if (products.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="text-center text-gray-600 p-5">
+        <div className="text-center p-5">
           <span className="text-5xl block mb-4">📦</span>
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">No products found</h3>
-          <p className="text-sm">Try adjusting your search or category filter</p>
+          <h3 className={`text-lg font-semibold mb-2 transition-colors ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+            No products found
+          </h3>
+          <p className={`text-sm transition-colors ${isDarkMode ? 'text-gray-500' : 'text-gray-600'}`}>
+            Try adjusting your search or category filter
+          </p>
         </div>
       </div>
     );

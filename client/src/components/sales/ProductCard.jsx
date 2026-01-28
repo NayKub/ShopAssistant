@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
+import { useTheme } from '../../context/ThemeContext';
 import RestockButton from './RestockButton'; 
 
-// Constant defining the base URL for uploaded images.
 const BASE_UPLOAD_URL = 'http://localhost:3000/uploads';
 
 const ProductCard = ({ product, onAddToCart, viewMode, getAvailableStock, quantityInCart, onRemoveAll, onRefillStock, navigateTo }) => {
+  const { isDarkMode } = useTheme();
   const placeholderImage = "https://via.placeholder.com/150?text=No+Image";
   
   const availableStock = getAvailableStock(product);
@@ -21,36 +22,43 @@ const ProductCard = ({ product, onAddToCart, viewMode, getAvailableStock, quanti
 
   const getStockDisplay = () => {
     if (availableStock === 0) {
-      return { text: 'Out of stock', className: 'text-red-600 font-semibold' };
+      return { 
+        text: 'Out of stock', 
+        className: isDarkMode ? 'text-red-400 font-semibold' : 'text-red-600 font-semibold' 
+      };
     }
     if (availableStock < 5) {
-      return { text: `Only ${availableStock} left`, className: 'text-orange-500 font-semibold' };
+      return { 
+        text: `Only ${availableStock} left`, 
+        className: isDarkMode ? 'text-orange-400 font-semibold' : 'text-orange-500 font-semibold' 
+      };
     }
-    return { text: `In stock: ${availableStock} available`, className: 'text-green-600' };
+    return { 
+      text: `In stock: ${availableStock} available`, 
+      className: isDarkMode ? 'text-green-400' : 'text-green-600' 
+    };
   };
 
   const stockInfo = getStockDisplay();
 
-  // Extract correct category name from product object or string
   const categoryName = typeof product.category === 'object' && product.category !== null 
     ? product.category.name 
     : product.category || 'N/A';
 
   return (
     <div 
-        className={`bg-white rounded-[15px] p-[18px] shadow-md flex transition-all duration-200 relative overflow-hidden
+        className={`rounded-[15px] p-[18px] shadow-md flex transition-all duration-300 relative overflow-hidden
           ${!isInStock ? 'opacity-70' : 'hover:translate-y-[-2px] hover:shadow-xl'}
-          ${viewMode === 'table' ? 'flex-row items-center p-4 mb-3 rounded-xl' : 'flex-col gap-3'}`
+          ${viewMode === 'table' ? 'flex-row items-center p-4 mb-3 rounded-xl' : 'flex-col gap-3'}
+          ${isDarkMode ? 'bg-[#1a1a1a] border border-gray-800' : 'bg-white border border-transparent'}`
         }
         onClick={() => navigateTo('edit_product', product._id)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
     >
       
-      {/* Restock and Delete Button Group (Visible when Out of Stock and Hovered) */}
       {(!isInStock) && isHovered && (
           <div className="absolute top-3 right-3 z-30 flex items-center space-x-2">
-            {/* Delete Product Button */}
             <button 
               className="w-7 h-7 rounded-full bg-red-600 text-white text-xs font-semibold cursor-pointer transition-all duration-200 shadow-md flex items-center justify-center hover:bg-red-700"
               onClick={(e) => { e.stopPropagation(); onRemoveAll(product._id); }}
@@ -66,9 +74,9 @@ const ProductCard = ({ product, onAddToCart, viewMode, getAvailableStock, quanti
           </div>
       )}
 
-      {/* Product Image */}
-      <div className={`bg-gray-200 rounded-xl flex items-center justify-center relative overflow-hidden 
+      <div className={`rounded-xl flex items-center justify-center relative overflow-hidden transition-colors duration-300
         ${viewMode === 'table' ? 'w-20 h-20 flex-shrink-0' : 'w-full h-[140px]'}
+        ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'}
       `}>
         {product.image ? (
           <img 
@@ -78,33 +86,42 @@ const ProductCard = ({ product, onAddToCart, viewMode, getAvailableStock, quanti
             onError={(e) => { e.target.onerror = null; e.target.src=placeholderImage; }}
           />
         ) : (
-          <div className="text-4xl text-gray-500">
+          <div className={`text-4xl transition-colors ${isDarkMode ? 'text-gray-600' : 'text-gray-500'}`}>
             <span>📷</span>
           </div>
         )}
         {!isInStock && <div className="absolute inset-0 bg-black bg-opacity-70 text-white flex items-center justify-center text-xs font-semibold">Out of Stock</div>}
       </div>
       
-      {/* Product Info */}
       <div className={`flex flex-col gap-2 ${viewMode === 'table' ? 'flex-1 ml-4 min-w-0' : 'flex-1'}`}>
-        <h3 className="text-sm font-semibold text-gray-800 overflow-hidden text-ellipsis whitespace-nowrap leading-tight" title={product.product_name}>{product.product_name}</h3>
+        <h3 className={`text-sm font-semibold overflow-hidden text-ellipsis whitespace-nowrap leading-tight transition-colors ${
+          isDarkMode ? 'text-gray-100' : 'text-gray-800'
+        }`} title={product.product_name}>{product.product_name}</h3>
         
-        {/* Category name */}
-        <div className="text-xs text-gray-500 uppercase font-medium">{categoryName}</div>
+        <div className={`text-xs uppercase font-medium transition-colors ${
+          isDarkMode ? 'text-gray-500' : 'text-gray-400'
+        }`}>{categoryName}</div>
         
         <div className="text-xs">
           <span className={stockInfo.className}>
             {stockInfo.text}
           </span>
-          {quantityInCart > 0 && <span className="ml-2 text-blue-500 text-xs font-bold">({quantityInCart} in cart)</span>}
+          {quantityInCart > 0 && (
+            <span className={`ml-2 text-xs font-bold transition-colors ${
+              isDarkMode ? 'text-blue-400' : 'text-blue-500'
+            }`}>({quantityInCart} in cart)</span>
+          )}
         </div>
 
-        {/* Price and Add to Cart Button */}
         <div className={`flex items-center mt-auto ${viewMode === 'table' ? 'ml-auto gap-5' : 'justify-between'}`}>
-          <span className="text-lg font-bold text-green-600">{formatPrice(product.price)}</span>
+          <span className={`text-lg font-bold transition-colors ${
+            isDarkMode ? 'text-green-400' : 'text-green-600'
+          }`}>{formatPrice(product.price)}</span>
           <button 
-            className={`w-[38px] h-[38px] rounded-full bg-green-500 text-white text-xl font-light cursor-pointer transition-all duration-200 shadow-md flex items-center justify-center 
-              ${!canAddToCart ? 'bg-gray-400 cursor-not-allowed opacity-60' : 'hover:bg-green-600 hover:scale-[1.05] hover:shadow-lg'}`}
+            className={`w-[38px] h-[38px] rounded-full text-white text-xl font-light cursor-pointer transition-all duration-200 shadow-md flex items-center justify-center 
+              ${!canAddToCart 
+                ? (isDarkMode ? 'bg-gray-700 opacity-40 cursor-not-allowed' : 'bg-gray-400 opacity-60 cursor-not-allowed') 
+                : 'bg-green-500 hover:bg-green-600 hover:scale-[1.05] hover:shadow-lg'}`}
             onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
             disabled={!canAddToCart}
             title={canAddToCart ? 'Add to cart' : 'Stock limit reached'}

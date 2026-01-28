@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import Header from '../components/sales/Header';
 import ProductGrid from '../components/sales/ProductGrid';
 import Cart from '../components/sales/Cart';
-import Sidebar from '../components/sales/Sidebar'; // import มาใช้ตรงนี้ครับ
+import Sidebar from '../components/sales/Sidebar';
 import CategoryManagementComponent from '../components/sales/CategoryManagementComponent'; 
+import SettingsPage from '../components/sales/SettingsPage';
 
 const SalesPage = ({ navigateTo }) => {
+    const { isDarkMode } = useTheme(); // ✅ ดึงมาใช้คุม Theme หลัก
     const [products, setProducts] = useState([]);
     const [cart, setCart] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -25,7 +28,6 @@ const SalesPage = ({ navigateTo }) => {
 
     const getToken = () => localStorage.getItem('userToken');
 
-    // ... (fetchProducts และ logic อื่นๆ เหมือนเดิม) ...
     const fetchProducts = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -83,6 +85,14 @@ const SalesPage = ({ navigateTo }) => {
         });
     }, [getAvailableStock]);
 
+    const handleRemoveFromCart = useCallback((productId) => {
+        setCart(prevCart => prevCart.filter(item => item.product._id !== productId));
+    }, []);
+
+    const handleClearCart = useCallback(() => {
+        setCart([]);
+    }, []);
+
     const updateQuantity = useCallback((productId, change) => {
         setCart(prevCart => prevCart.flatMap(item => {
             if (item.product._id === productId) {
@@ -95,14 +105,86 @@ const SalesPage = ({ navigateTo }) => {
             return [item];
         }));
     }, [getAvailableStock]);
+    
+    const handleDeleteProduct = async (productId) => {
+        if (!window.confirm('Are you sure you want to delete this product permanently?')) return;
+        
+        setLoading(true);
+        try {
+            const response = await fetch(`http://localhost:3000/api/products/permanent/${productId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            if (response.ok) {
+                await fetchProducts(); 
+            }
+        } catch (err) {
+            console.error('Delete error:', err);
+        } finally {
+            setLoading(false); 
+        }
+    };
+
+    const handleRefillStock = async (productId, amount) => {
+        try {
+            const response = await fetch(`http://localhost:3000/api/products/restock/${productId}`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}` 
+                },
+                body: JSON.stringify({ amount })
+            });
+            if (response.ok) {
+                await fetchProducts(); 
+            }
+        } catch (err) {
+            console.error('Refill error:', err);
+        }
+    };
 
     const handleCheckout = async () => {
-        // ... (logic checkout เหมือนเดิม) ...
+        if (cart.length === 0) return;
+
+        setLoading(true);
+        setCheckoutMessage(null);
+        const token = getToken();
+
+        try {
+            const response = await fetch('http://localhost:3000/api/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    items: cart.map(item => ({
+                        productId: item.product._id,
+                        quantity: item.quantity
+                    }))
+                }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                setCheckoutMessage('✅ Checkout successful!');
+                setCart([]); 
+                await fetchProducts(); 
+            } else {
+                setCheckoutMessage(`❌ Checkout failed: ${result.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            setCheckoutMessage('❌ Network error during checkout');
+        } finally {
+            setLoading(false);
+            setTimeout(() => setCheckoutMessage(null), 3000);
+        }
     };
 
     const handleSidebarNavigation = useCallback((id) => {
         if (id === 'settings') {
-            setShowSettings(true); // เปิด Pop-up แทนการเปลี่ยนหน้า
+            setShowSettings(true); 
         } else {
             setActiveItem(id);
             setShowSettings(false);
@@ -125,18 +207,20 @@ const SalesPage = ({ navigateTo }) => {
         return result;
     }, [products, selectedCategory, searchTerm]);
 
-    
-
     return (
-        <div className="flex">
-            {/* เรียกใช้ Sidebar ที่แยกออกมาแล้ว */}
+        <div className={`flex min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-[#121212]' : 'bg-gray-50'}`}>
             <Sidebar 
                 activeItem={activeItem} 
                 onNavigate={handleSidebarNavigation} 
             />
 
-            <div className="flex-1 min-h-screen bg-white ml-[80px] p-10 pr-[300px]">
-                {error && <div className="p-4 mb-4 bg-red-100 text-red-700 rounded-lg">{error}</div>}
+            <div className={`flex-1 ml-[80px] p-10 pr-[300px] transition-colors duration-300 ${isDarkMode ? 'bg-[#121212] text-white' : 'bg-gray-50 text-gray-800'}`}>
+                {error && (
+                    <div className="p-4 mb-6 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-2xl border border-red-200 dark:border-red-800/50">
+                        {error}
+                    </div>
+                )}
+                
                 <Header 
                     searchQuery={searchTerm}
                     onSearchChange={setSearchTerm}
@@ -149,26 +233,35 @@ const SalesPage = ({ navigateTo }) => {
                     onManageCategories={() => setShowCategoryManager(true)}
                 />
 
-                <ProductGrid 
-                    products={filteredProducts}
-                    onAddToCart={addToCart}
-                    isLoading={loading}
-                    viewMode={viewMode}
-                    getAvailableStock={getAvailableStock}
-                    cartItems={cart}
-                    navigateTo={navigateTo}
-                />
+                <div className="mt-8">
+                    <ProductGrid 
+                        products={filteredProducts}
+                        onAddToCart={addToCart}
+                        isLoading={loading}
+                        viewMode={viewMode}
+                        getAvailableStock={getAvailableStock}
+                        cartItems={cart}
+                        onRemoveAll={handleDeleteProduct} 
+                        onRefillStock={handleRefillStock}
+                        navigateTo={navigateTo}
+                    />
+                </div>
             </div>
 
             <Cart 
                 cartItems={cart}
                 onUpdateQuantity={updateQuantity}
+                onRemoveItem={handleRemoveFromCart}
                 onCheckout={handleCheckout}
                 subtotal={subtotal}
                 tax={tax}
                 total={total}
                 isLoading={loading}
                 checkoutMessage={checkoutMessage}
+                clearCart={handleClearCart}
+                getAvailableStock={getAvailableStock}
+                serviceCharge={0}
+                discount={0}
             />
 
             {showCategoryManager && (

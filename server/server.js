@@ -455,7 +455,7 @@ app.get('/api/products/:id', protect, async (req, res) => {
     }
 });
 
-// PUT /api/products/:id - Update product by ID (รองรับ File Upload)
+// PUT /api/products/:id - Update product by ID
 app.put('/api/products/:id', protect, (req, res) => { 
     upload(req, res, async (err) => {
         if (err) {
@@ -463,26 +463,35 @@ app.put('/api/products/:id', protect, (req, res) => {
         }
         
         try {
+            // ดึงข้อมูลออกมาก่อนเพื่อแปลง Type
+            const { product_name, cost, price, stock, category, sold_count } = req.body;
+            
+            // ตรวจสอบว่ามีรูปใหม่ไหม ถ้าไม่มีใช้ชื่อรูปเดิมที่ส่งมาจาก req.body.image
             const imageName = req.file ? req.file.filename : req.body.image; 
             
             const dataToUpdate = {
-                ...req.body,
-                image: imageName,
+                product_name,
+                cost: parseFloat(cost), // แปลงเป็นตัวเลข
+                price: parseFloat(price), // แปลงเป็นตัวเลข
+                stock: parseInt(stock, 10), // แปลงเป็นจำนวนเต็ม
+                category: category, // ID ของ Category
+                sold_count: parseInt(sold_count, 10) || 0,
+                image: imageName
             };
             
+            // ป้องกันการแก้ไข store_id
             delete dataToUpdate.store_id; 
 
             const product = await Product.findOneAndUpdate(
                 { _id: req.params.id, store_id: req.storeId }, 
-                dataToUpdate, 
+                { $set: dataToUpdate }, // ใช้ $set เพื่อความชัดเจน
                 { new: true, runValidators: true }
             );
 
             if (!product) {
-                return res.status(404).json({ success: false, error: 'ไม่พบสินค้าที่ต้องการแก้ไขในสาขาของคุณ' });
+                return res.status(404).json({ success: false, error: 'ไม่พบสินค้าที่ต้องการแก้ไข' });
             }
 
-            // ถ้าอัปเดตสำเร็จ อาจจะต้อง Populate เพื่อส่งข้อมูล Category ที่ถูกต้องกลับไป
             const updatedProductWithCategory = await Product.findById(product._id).populate('category', 'name');
 
             res.status(200).json({ 
@@ -494,6 +503,120 @@ app.put('/api/products/:id', protect, (req, res) => {
             res.status(400).json({ success: false, error: error.message });
         }
     });
+});
+
+// ----------------------------------------------------------------
+// 🔑 API: Settings Management (Account Info)
+// ----------------------------------------------------------------
+
+// GET /api/settings/profile
+app.get('/api/settings/profile', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId).select('-password');
+        const store = await Store.findById(req.storeId);
+
+        if (!user || !store) {
+            return res.status(404).json({ success: false, message: 'ไม่พบข้อมูล' });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                store_name: store.store_name,
+                email: user.email,
+                username: user.username,
+                phone: user.phone || '' // 🟢 ส่งค่าว่างกลับไปถ้ายังไม่มีข้อมูล
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// PUT /api/settings/profile - อัปเดตข้อมูล (ชื่อร้าน, Email, ฯลฯ)
+app.put('/api/settings/profile', protect, async (req, res) => {
+    const { store_name, email, phone } = req.body;
+
+    try {
+        // 1. อัปเดตชื่อร้านใน Store Model
+        if (store_name) {
+            await Store.findByIdAndUpdate(req.storeId, { store_name });
+        }
+
+        // 2. อัปเดต Email/Phone ใน User Model
+        const updateData = {};
+        if (email) updateData.email = email;
+        if (phone) updateData.phone = phone;
+
+        await User.findByIdAndUpdate(req.userId, updateData);
+
+        res.status(200).json({ success: true, message: 'อัปเดตข้อมูลสำเร็จ' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// ----------------------------------------------------------------
+// 🔑 API: Profile Image Upload
+// ----------------------------------------------------------------
+
+app.put('/api/settings/profile-image', protect, (req, res) => {
+    upload(req, res, async (err) => {
+        if (err) {
+            return res.status(400).json({ success: false, error: err.message });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'กรุณาเลือกไฟล์รูปภาพ' });
+        }
+
+        try {
+            const imageName = req.file.filename;
+
+            const user = await User.findByIdAndUpdate(
+                req.userId,
+                { profile_image: imageName },
+                { new: true }
+            );
+
+            if (!user) {
+                return res.status(404).json({ success: false, message: 'ไม่พบผู้ใช้' });
+            }
+
+            res.status(200).json({
+                success: true,
+                image: imageName,
+                message: 'อัปโหลดรูปโปรไฟล์สำเร็จ'
+            });
+        } catch (error) {
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+});
+
+// แก้ไข GET /api/settings/profile ให้ส่งรูปไปด้วย
+app.get('/api/settings/profile', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId).select('-password');
+        const store = await Store.findById(req.storeId);
+
+        if (!user || !store) {
+            return res.status(404).json({ success: false, message: 'ไม่พบข้อมูล' });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                store_name: store.store_name,
+                email: user.email,
+                username: user.username,
+                phone: user.phone || '',
+                profile_image: user.profile_image || '' // 🟢 ส่งชื่อไฟล์รูปไปด้วย
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 connectDB();

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useTheme } from '../../context/ThemeContext';
 
 const RestockButton = ({ productId, onRefillStock }) => {
+    const { isDarkMode } = useTheme();
     const [isInputVisible, setIsInputVisible] = useState(false);
     const [refillAmount, setRefillAmount] = useState('');
 
@@ -11,7 +13,7 @@ const RestockButton = ({ productId, onRefillStock }) => {
         if (amount > 0) {
             onRefillStock(productId, amount);
             setRefillAmount('');
-            setIsInputVisible(false); // Close input after refill
+            setIsInputVisible(false);
         } else {
             alert('Please enter a valid amount (greater than 0).');
         }
@@ -32,13 +34,17 @@ const RestockButton = ({ productId, onRefillStock }) => {
     const toggleInput = (e) => {
         e.stopPropagation();
         setIsInputVisible(prev => !prev);
-        setRefillAmount(''); // Clear value on toggle
+        setRefillAmount('');
     }
 
     return (
         <div className="flex items-center space-x-2 z-10">
             {isInputVisible ? (
-                <div className="flex items-center bg-white rounded-full p-1 shadow-lg">
+                <div className={`flex items-center rounded-full p-1 shadow-lg transition-colors duration-200 border ${
+                    isDarkMode 
+                    ? 'bg-gray-800 border-gray-700' 
+                    : 'bg-white border-gray-200'
+                }`}>
                     <input
                         type="number"
                         min="1"
@@ -49,7 +55,9 @@ const RestockButton = ({ productId, onRefillStock }) => {
                         onClick={(e) => e.stopPropagation()}
                         autoFocus
                         placeholder="Qty"
-                        className="w-12 text-sm font-medium text-center border-none bg-transparent focus:outline-none focus:ring-0 p-0 m-0"
+                        className={`w-12 text-sm font-medium text-center border-none bg-transparent focus:outline-none focus:ring-0 p-0 m-0 ${
+                            isDarkMode ? 'text-white placeholder:text-gray-500' : 'text-gray-800 placeholder:text-gray-400'
+                        }`}
                     />
                     <button 
                         className="w-6 h-6 rounded-full bg-blue-600 text-white text-base font-semibold cursor-pointer transition-all duration-200 flex items-center justify-center hover:bg-blue-700 disabled:opacity-50"
@@ -63,11 +71,12 @@ const RestockButton = ({ productId, onRefillStock }) => {
             ) : null}
             
             <button 
-                className="w-7 h-7 rounded-full bg-blue-600 text-white text-base font-semibold cursor-pointer transition-all duration-200 shadow-md flex items-center justify-center hover:bg-blue-700"
+                className={`w-7 h-7 rounded-full text-white text-base font-semibold cursor-pointer transition-all duration-200 shadow-md flex items-center justify-center ${
+                    isDarkMode ? 'bg-blue-500 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'
+                }`}
                 onClick={toggleInput}
                 title="Restock (Custom Amount)" 
             >
-                {/* Refill Icon */}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m3.987 11h-.582a2 2 0 01-2-2v-3m11 2v3a2 2 0 01-2 2h-3.987m-4.472-8l-2 2m0 0l2 2m-2-2h8"></path></svg>
             </button>
         </div>
