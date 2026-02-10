@@ -79,11 +79,11 @@ const RestockButton = ({ productId, onRefillStock }) => {
     );
 }
 
-const Sidebar = ({ activeItem, onNavigate }) => {
+const Sidebar = ({ activeItem, onNavigate, navigateTo }) => {
   const menuItems = [
     { id: 'notification', icon: null, hasRedDot: true, label: 'Notifications' },
-    { id: 'home', icon: '🏠', hasRedDot: false, label: 'Home' },
-    { id: 'analytics', icon: '📊', hasRedDot: false, label: 'Analytics' },
+    { id: 'home', icon: '🏠', hasRedDot: false, label: 'Home', action: () => {} },
+    { id: 'analytics', icon: '📊', hasRedDot: false, label: 'Analytics', action: () => navigateTo('analytics') },
     { id: 'settings', icon: '⚙️', hasRedDot: false, label: 'Settings' }
   ];
 
@@ -95,7 +95,10 @@ const Sidebar = ({ activeItem, onNavigate }) => {
           className={`w-[50px] h-[50px] rounded-full flex items-center justify-center cursor-pointer transition-colors duration-200 
             ${activeItem === item.id ? 'bg-blue-500 text-white shadow-md' : 'hover:bg-gray-200'}`
           }
-          onClick={() => onNavigate(item.id)}
+          onClick={() => {
+            onNavigate(item.id);
+            if (item.action) item.action();
+          }}
           title={item.label}
         >
           {item.hasRedDot ? (
@@ -885,6 +888,7 @@ const SalesPage = ({ navigateTo }) => {
             <Sidebar 
                 activeItem={activeItem} 
                 onNavigate={setActiveItem} 
+                navigateTo={navigateTo}
             />
 
             <div className="flex-1 min-h-screen bg-white ml-[80px] p-10 pr-[300px]">

@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import SalesView from './components/SalesView';       
 import AddProductForm from './components/AddProductForm'; 
 import EditProductForm from './components/EditProductForm';
+import AnalyticsView from './components/analytic/AnalyticsView';
 
 const VIEWS = {
     SALES: 'sales',
     ADD_PRODUCT: 'add_product',
     EDIT_PRODUCT: 'edit_product',
+    ANALYTICS: 'analytics',
 };
 
 function App() {
@@ -26,6 +28,8 @@ function App() {
                 return <AddProductForm navigateTo={navigateTo} />;
             case VIEWS.EDIT_PRODUCT:
                 return <EditProductForm navigateTo={navigateTo} productId={editingProductId} />; 
+            case VIEWS.ANALYTICS:
+                return <AnalyticsView navigateTo={navigateTo} />;
             default:
                 return <div>404 Not Found</div>;
         }
