@@ -18,7 +18,7 @@ const Sidebar = ({ activeItem, onNavigate }) => {
   };
 
   return (
-    <div className={`fixed left-0 top-0 w-[80px] h-screen flex flex-col items-center pt-5 pb-5 space-y-5 shadow-lg z-20 transition-colors duration-300 ${isDarkMode ? 'bg-[#121212] border-r border-gray-800' : 'bg-gray-100'}`}>
+    <div className={`fixed left-0 top-0 w-[80px] h-screen flex flex-col items-center pt-5 pb-5 space-y-5 shadow-lg z-[100] transition-colors duration-300 ${isDarkMode ? 'bg-[#121212] border-r border-gray-800' : 'bg-gray-100'}`}>
       {menuItems.map(item => (
         <div 
           key={item.id}

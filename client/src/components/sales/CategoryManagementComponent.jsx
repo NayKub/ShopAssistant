@@ -100,7 +100,7 @@ const CategoryManagementComponent = ({ onClose }) => {
                 <h3 className={`text-3xl font-bold border-b-2 pb-3 flex justify-between items-center transition-colors ${
                     isDarkMode ? 'text-white border-gray-800' : 'text-gray-800 border-gray-100'
                 }`}>
-                    🏷️ Manage Categories
+                    Manage Categories
                     <button 
                         onClick={onClose} 
                         className={`text-4xl leading-none transition-colors ${

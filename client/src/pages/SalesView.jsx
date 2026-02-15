@@ -6,9 +6,10 @@ import Cart from '../components/sales/Cart';
 import Sidebar from '../components/sales/Sidebar';
 import CategoryManagementComponent from '../components/sales/CategoryManagementComponent'; 
 import SettingsPage from '../components/sales/SettingsPage';
+import AnalyticsView from './AnalyticsView';
 
 const SalesPage = ({ navigateTo }) => {
-    const { isDarkMode } = useTheme(); // ✅ ดึงมาใช้คุม Theme หลัก
+    const { isDarkMode } = useTheme();
     const [products, setProducts] = useState([]);
     const [cart, setCart] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -43,7 +44,11 @@ const SalesPage = ({ navigateTo }) => {
             });
             const result = await response.json();
             if (response.ok && result.success) {
-                setProducts(result.data.map(p => ({ ...p, price: parseFloat(p.price) })));
+                setProducts(result.data.map(p => ({ 
+                    ...p, 
+                    price: parseFloat(p.price) || 0,
+                    cost: parseFloat(p.cost) || 0 
+                })));
             } else {
                 setError('Failed to fetch products');
             }
@@ -64,7 +69,7 @@ const SalesPage = ({ navigateTo }) => {
     }, [fetchProducts]);
 
     const getAvailableStock = useCallback((product) => {
-        return Math.max(0, (product.stock || 0) - (product.sold_count || 0));
+        return Math.max(0, (product.stock || 0));
     }, []);
 
     const addToCart = useCallback((product) => {
@@ -151,6 +156,7 @@ const SalesPage = ({ navigateTo }) => {
         const token = getToken();
 
         try {
+            // ปรับการส่งข้อมูลให้ตรงกับ Sale Schema ใน Backend
             const response = await fetch('http://localhost:3000/api/checkout', {
                 method: 'POST',
                 headers: {
@@ -160,7 +166,9 @@ const SalesPage = ({ navigateTo }) => {
                 body: JSON.stringify({
                     items: cart.map(item => ({
                         productId: item.product._id,
-                        quantity: item.quantity
+                        quantity: item.quantity,
+                        price: item.product.price, // ส่งราคา ณ ตอนขาย
+                        cost: item.product.cost    // ส่งต้นทุน ณ ตอนขาย (ใช้ทำกำไร/ขาดทุนรายเดือน)
                     }))
                 }),
             });
@@ -170,7 +178,7 @@ const SalesPage = ({ navigateTo }) => {
             if (response.ok && result.success) {
                 setCheckoutMessage('✅ Checkout successful!');
                 setCart([]); 
-                await fetchProducts(); 
+                await fetchProducts(); // ดึงสต็อกที่อัปเดตใหม่จาก Server
             } else {
                 setCheckoutMessage(`❌ Checkout failed: ${result.message || 'Unknown error'}`);
             }
@@ -214,55 +222,66 @@ const SalesPage = ({ navigateTo }) => {
                 onNavigate={handleSidebarNavigation} 
             />
 
-            <div className={`flex-1 ml-[80px] p-10 pr-[300px] transition-colors duration-300 ${isDarkMode ? 'bg-[#121212] text-white' : 'bg-gray-50 text-gray-800'}`}>
+            <div className={`flex-1 ml-[80px] p-10 transition-colors duration-300 
+                ${activeItem === 'home' ? 'pr-[300px]' : 'pr-10'} 
+                ${isDarkMode ? 'bg-[#121212] text-white' : 'bg-gray-50 text-gray-800'}`}>
+                
                 {error && (
                     <div className="p-4 mb-6 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-2xl border border-red-200 dark:border-red-800/50">
                         {error}
                     </div>
                 )}
                 
-                <Header 
-                    searchQuery={searchTerm}
-                    onSearchChange={setSearchTerm}
-                    categories={allCategories}
-                    selectedCategory={selectedCategory}
-                    onCategoryChange={setSelectedCategory}
-                    onAddProduct={() => navigateTo('add_product')}
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode}
-                    onManageCategories={() => setShowCategoryManager(true)}
-                />
+                {activeItem === 'home' ? (
+                    <>
+                        <Header 
+                            searchQuery={searchTerm}
+                            onSearchChange={setSearchTerm}
+                            categories={allCategories}
+                            selectedCategory={selectedCategory}
+                            onCategoryChange={setSelectedCategory}
+                            onAddProduct={() => navigateTo('add_product')}
+                            viewMode={viewMode}
+                            onViewModeChange={setViewMode}
+                            onManageCategories={() => setShowCategoryManager(true)}
+                        />
 
-                <div className="mt-8">
-                    <ProductGrid 
-                        products={filteredProducts}
-                        onAddToCart={addToCart}
-                        isLoading={loading}
-                        viewMode={viewMode}
-                        getAvailableStock={getAvailableStock}
-                        cartItems={cart}
-                        onRemoveAll={handleDeleteProduct} 
-                        onRefillStock={handleRefillStock}
-                        navigateTo={navigateTo}
-                    />
-                </div>
+                        <div className="mt-8">
+                            <ProductGrid 
+                                products={filteredProducts}
+                                onAddToCart={addToCart}
+                                isLoading={loading}
+                                viewMode={viewMode}
+                                getAvailableStock={getAvailableStock}
+                                cartItems={cart}
+                                onRemoveAll={handleDeleteProduct} 
+                                onRefillStock={handleRefillStock}
+                                navigateTo={navigateTo}
+                            />
+                        </div>
+                    </>
+                ) : activeItem === 'analytics' ? (
+                    <AnalyticsView />
+                ) : null}
             </div>
 
-            <Cart 
-                cartItems={cart}
-                onUpdateQuantity={updateQuantity}
-                onRemoveItem={handleRemoveFromCart}
-                onCheckout={handleCheckout}
-                subtotal={subtotal}
-                tax={tax}
-                total={total}
-                isLoading={loading}
-                checkoutMessage={checkoutMessage}
-                clearCart={handleClearCart}
-                getAvailableStock={getAvailableStock}
-                serviceCharge={0}
-                discount={0}
-            />
+            {activeItem === 'home' && (
+                <Cart 
+                    cartItems={cart}
+                    onUpdateQuantity={updateQuantity}
+                    onRemoveItem={handleRemoveFromCart}
+                    onCheckout={handleCheckout}
+                    subtotal={subtotal}
+                    tax={tax}
+                    total={total}
+                    isLoading={loading}
+                    checkoutMessage={checkoutMessage}
+                    clearCart={handleClearCart}
+                    getAvailableStock={getAvailableStock}
+                    serviceCharge={0}
+                    discount={0}
+                />
+            )}
 
             {showCategoryManager && (
                 <CategoryManagementComponent onClose={handleCloseCategoryManager} />

@@ -18,17 +18,17 @@ const Header = ({
     <div className="mb-8">
       <div className="flex gap-4 mb-6">
         <button 
-          className="bg-green-600 text-white p-4 rounded-[15px] text-base font-semibold cursor-pointer flex items-center gap-2 transition-all duration-200 hover:bg-green-700 hover:translate-y-[-1px]" 
+          className="bg-green-600 text-white px-6 py-4 rounded-[15px] text-base font-semibold cursor-pointer transition-all duration-200 hover:bg-green-700 hover:translate-y-[-1px] flex items-center justify-center" 
           onClick={onAddProduct}
         >
-          <span className="text-lg">🏪</span> Add product
+          Add product
         </button>
 
         <button 
-          className="bg-purple-600 text-white p-4 rounded-[15px] text-base font-semibold cursor-pointer flex items-center gap-2 transition-all duration-200 hover:bg-purple-700 hover:translate-y-[-1px]" 
+          className="bg-purple-600 text-white px-6 py-4 rounded-[15px] text-base font-semibold cursor-pointer transition-all duration-200 hover:bg-purple-700 hover:translate-y-[-1px] flex items-center justify-center" 
           onClick={onManageCategories} 
         >
-          <span className="text-lg">🏷️</span> Manage Category
+          Manage Category
         </button>
       </div>
       
