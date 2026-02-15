@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+@layer base {
+  /* บังคับสีพื้นฐานเมื่อไม่มี class dark */
+  :root {
+    background-color: #ffffff !important;
+    color: #1a1a1a !important;
+  }
+
+  /* บังคับสีเมื่อมี class dark */
+  .dark {
+    background-color: #121212 !important;
+    color: #ffffff !important;
+  }
+
+  body {
+    background-color: inherit;
+    color: inherit;
+    min-height: 100vh;
+    @apply transition-colors duration-300;
+  }
+}

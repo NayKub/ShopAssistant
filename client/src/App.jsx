@@ -1,38 +1,75 @@
 import React, { useState } from 'react';
-import SalesView from './components/SalesView';       
-import AddProductForm from './components/AddProductForm'; 
-import EditProductForm from './components/EditProductForm';
+import HomePage from './pages/HomePage';
+import LoginView from './pages/LoginView';       
+import RegisterView from './pages/RegisterView'; 
+import SalesView from './pages/SalesView';       
+import AddProductForm from './pages/AddProductForm'; 
+import EditProductForm from './pages/EditProductForm';
+import SettingsPage from './components/sales/SettingsPage';
+import AboutUs from './pages/AboutUs';
+import { useTheme } from './context/ThemeContext';
 
 const VIEWS = {
+    HOME: 'home',
+    REGISTER: 'register',
+    LOGIN: 'login',
+    ABOUT_US: 'about',
     SALES: 'sales',
     ADD_PRODUCT: 'add_product',
     EDIT_PRODUCT: 'edit_product',
+    SETTINGS: 'settings', 
+};
+
+const checkAuthStatus = () => {
+    return localStorage.getItem('userToken') && localStorage.getItem('storeId');
 };
 
 function App() {
-    const [currentView, setCurrentView] = useState(VIEWS.SALES);
+    const { isDarkMode } = useTheme();
+    const initialView = checkAuthStatus() ? VIEWS.SALES : VIEWS.HOME;
+    const [currentView, setCurrentView] = useState(initialView);
     const [editingProductId, setEditingProductId] = useState(null); 
     
     const navigateTo = (viewName, productId = null) => {
+        if (viewName === 'logout') {
+            localStorage.removeItem('userToken');
+            localStorage.removeItem('storeId');
+            setCurrentView(VIEWS.HOME);
+            return;
+        }
         setEditingProductId(productId); 
         setCurrentView(viewName);
     };
 
+    const handleLoginSuccess = () => {
+        setCurrentView(VIEWS.SALES);
+    };
+    
     const renderView = () => {
         switch (currentView) {
+            case VIEWS.HOME:
+                return <HomePage navigateTo={navigateTo} currentView={currentView} />;
+            case VIEWS.ABOUT_US:
+                return <AboutUs navigateTo={navigateTo} />;
+            case VIEWS.REGISTER:
+                return <RegisterView navigateTo={navigateTo} />; 
+            case VIEWS.LOGIN:
+                return <LoginView navigateTo={navigateTo} onLoginSuccess={handleLoginSuccess} />; 
             case VIEWS.SALES:
                 return <SalesView navigateTo={navigateTo} />; 
             case VIEWS.ADD_PRODUCT:
                 return <AddProductForm navigateTo={navigateTo} />;
             case VIEWS.EDIT_PRODUCT:
                 return <EditProductForm navigateTo={navigateTo} productId={editingProductId} />; 
+            case VIEWS.SETTINGS:
+                return <SettingsPage navigateTo={navigateTo} onClose={() => setCurrentView(VIEWS.SALES)} />;
             default:
-                return <div>404 Not Found</div>;
+                return <div className="p-8 text-red-600 text-center">404 Not Found</div>;
         }
     };
 
     return (
-        <div className="App">
+        <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-[#121212]' : 'bg-white'}`}>
             {renderView()}
         </div>
     );
