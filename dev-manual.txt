@@ -1,0 +1,478 @@
+ShopAssistant - Developer Manual
+=====================================
+
+TABLE OF CONTENTS
+-----------------
+1. Project Overview
+2. System Architecture  
+3. Technology Stack
+4. Project Structure
+5. Development Environment Setup
+6. API Documentation
+7. Database Models
+8. Component Documentation
+9. Authentication System
+10. Deployment Instructions
+11. Contributing Guidelines
+
+PROJECT OVERVIEW
+-----------------
+ShopAssistant is a full-stack web application for retail operations management. It provides basic tools for inventory management, sales processing, and business analytics.
+
+Currently Implemented Features:
+- Product inventory management (CRUD operations)
+- Category management system
+- Shopping cart and checkout functionality
+- Sales analytics dashboard
+- User authentication (register/login)
+- Profile and store settings management
+- Image upload for products
+- Theme switching (light/dark mode)
+- Basic restock functionality
+
+SYSTEM ARCHITECTURE
+-------------------
+The application follows a simple client-server architecture:
+
+1. FRONTEND (React SPA)
+   - Single-page application with view-based routing
+   - Component-based React architecture
+   - Context API for theme management
+   - Local storage for authentication tokens
+   - Vite for development and building
+
+2. BACKEND (Node.js/Express)
+   - Express.js REST API server
+   - JWT-based authentication
+   - MongoDB database connection
+   - File upload handling with Multer
+   - CORS enabled for cross-origin requests
+
+TECHNOLOGY STACK
+----------------
+Frontend:
+- React 19.2.0 - UI library
+- Vite 7.2.4 - Build tool and dev server
+- Tailwind CSS 4.1.17 - CSS framework
+- JavaScript ES6+ - Programming language
+
+Backend:
+- Node.js - JavaScript runtime
+- Express 5.2.1 - Web framework
+- MongoDB with Mongoose 9.0.1 - Database
+- JWT (jsonwebtoken 9.0.3) - Authentication
+- bcryptjs 3.0.3 - Password hashing
+- Multer 2.0.2 - File uploads
+- CORS 2.8.5 - Cross-origin support
+
+Development Tools:
+- ESLint - Code linting
+- Nodemon - Development server restart
+- Git - Version control
+
+PROJECT STRUCTURE
+------------------
+Root Directory:
+├── LICENSE - Project license file
+├── README.md - Project documentation
+├── package.json - Workspace configuration
+├── client/ - Frontend application
+└── server/ - Backend application
+
+CLIENT STRUCTURE (Frontend):
+client/
+├── eslint.config.js - ESLint configuration
+├── index.html - Main HTML template
+├── package.json - Frontend dependencies
+├── README.md - Frontend documentation
+├── tailwind.config.js - Tailwind CSS configuration
+├── vite.config.js - Vite build configuration
+├── public/ - Static public assets
+│   └── fonts/
+│       └── Horizon-Font/ - Custom font files
+└── src/ - Source code
+    ├── App.jsx - Root application component
+    ├── main.jsx - Application entry point
+    ├── index.css - Global styles
+    ├── assets/ - Application assets (images, icons)
+    ├── components/ - Reusable UI components
+    │   └── sales/ - Sales-specific components
+    │       ├── Cart.jsx - Shopping cart component
+    │       ├── CategoryManagementComponent.jsx - Category CRUD
+    │       ├── Header.jsx - Application header
+    │       ├── ProductCard.jsx - Product display card
+    │       ├── ProductGrid.jsx - Product listing grid
+    │       ├── RestockButton.jsx - Inventory restock
+    │       ├── SettingsPage.jsx - Settings management
+    │       └── Sidebar.jsx - Navigation sidebar
+    ├── context/ - React context providers
+    │   └── ThemeContext.jsx - Theme state management
+    └── pages/ - Page-level components
+        ├── AboutUs.jsx - Company information page
+        ├── AddProductForm.jsx - Product creation form
+        ├── AnalyticsComponents.jsx - Analytics UI components
+        ├── AnalyticsView.jsx - Analytics dashboard
+        ├── EditProductForm.jsx - Product editing form
+        ├── HomePage.jsx - Landing page
+        ├── LoginView.jsx - User authentication
+        ├── RegisterView.jsx - User registration
+        └── SalesView.jsx - Sales management interface
+
+SERVER STRUCTURE (Backend):
+server/
+├── package.json - Backend dependencies
+├── server.js - Express server entry point and configuration
+├── models/ - Data models and business logic
+│   ├── products.js - Product data model
+│   ├── categorys.js - Category data model
+│   ├── sales.js - Sales transaction model
+│   ├── stores.js - Store management model
+│   └── users.js - User authentication model
+└── public/ - Publicly accessible files
+    └── uploads/ - User-uploaded files storage
+
+DEVELOPMENT ENVIRONMENT SETUP
+------------------------------
+
+PREREQUISITES:
+- Node.js version 16.0.0 or higher
+- npm version 8.0.0 or higher
+- Git version control system
+- MongoDB database (cloud or local)
+- Modern web browser
+
+INITIAL SETUP:
+1. Clone the repository:
+   git clone <repository-url>
+   cd ShopAssistant
+
+2. Install frontend dependencies:
+   cd client
+   npm install
+
+3. Install backend dependencies:
+   cd ../server
+   npm install
+
+ENVIRONMENT CONFIGURATION:
+Backend (server/.env):
+- Configure MongoDB connection string
+- Set JWT secret key
+- Set server port (default: 3000)
+
+Frontend:
+- No environment file needed for basic setup
+- API calls are configured to localhost:3000
+
+DEVELOPMENT SERVERS:
+1. Start backend server:
+   cd server
+   npm start
+   # Runs on http://localhost:3000 with nodemon
+
+2. Start frontend development server:
+   cd client
+   npm run dev
+   # Runs on http://localhost:5173
+
+AVAILABLE NPM SCRIPTS:
+
+Frontend (client/):
+- npm run dev - Start development server
+- npm run build - Create production build  
+- npm run preview - Preview production build
+- npm run lint - Run ESLint
+
+Backend (server/):
+- npm start - Start development server with nodemon
+- npm run server - Alternative start command
+
+API DOCUMENTATION
+-----------------
+Base URL: http://localhost:3000/api
+
+AUTHENTICATION ENDPOINTS:
+POST /api/auth/register - Register new user
+POST /api/auth/login - User login
+
+PRODUCT ENDPOINTS:
+GET /api/products - Get all products (requires auth)
+POST /api/products - Create product with image upload (requires auth)
+GET /api/products/:id - Get specific product (requires auth)
+PUT /api/products/:id - Update product with optional image (requires auth)
+POST /api/products/restock/:id - Restock product (requires auth)
+DELETE /api/products/permanent/:id - Delete product permanently (requires auth)
+
+CATEGORY ENDPOINTS:
+GET /api/categories - Get all categories (requires auth)
+POST /api/categories - Create new category (requires auth) 
+DELETE /api/categories/:id - Delete category (requires auth)
+
+SALES ENDPOINTS:
+POST /api/checkout - Process sale/checkout (requires auth)
+
+ANALYTICS ENDPOINTS:
+GET /api/analytics - Get main analytics data (requires auth)
+GET /api/analytics/daily - Get daily sales data (requires auth)
+GET /api/analytics/products - Get product performance data (requires auth)  
+GET /api/analytics/categories - Get category performance data (requires auth)
+
+SETTINGS ENDPOINTS:
+GET /api/settings/profile - Get user profile (requires auth)
+PUT /api/settings/profile - Update user profile (requires auth)
+PUT /api/settings/profile-image - Update profile image (requires auth)
+
+STORE ENDPOINTS:
+GET /api/store/info - Get store information (requires auth)
+
+Authentication:
+All protected endpoints require Bearer token in Authorization header:
+Authorization: Bearer <jwt-token>
+
+File Upload:
+Image uploads supported for products and profile pictures
+Max file size: 5MB
+Supported formats: JPEG, JPG, PNG, GIF
+
+DATABASE MODELS
+---------------
+The application uses MongoDB with Mongoose for data modeling:
+
+User Model (users.js):
+- Authentication and user profile information
+- Linked to store for multi-user support
+
+Product Model (products.js):  
+- Product information including name, price, stock
+- Category reference and image storage
+- Cost tracking for profit calculations
+
+Category Model (categorys.js):
+- Product categorization system
+- Basic category information
+
+Sale Model (sales.js):
+- Transaction records and sales history
+- Links to products and users
+
+Store Model (stores.js):
+- Store information and settings
+- Multi-store support structure
+
+COMPONENT DOCUMENTATION
+-----------------------
+
+APPLICATION STRUCTURE:
+App.jsx - Root component with view routing and authentication check
+- Manages current view state (home, login, register, sales, etc.)
+- Handles authentication status checking via localStorage
+- Provides navigation function to child components
+
+MAIN PAGES:
+
+SalesView.jsx - Primary application interface
+- Product grid display and management
+- Shopping cart functionality  
+- Category filtering and search
+- Integration with Header, ProductGrid, Cart, Sidebar components
+
+AnalyticsView.jsx - Business analytics dashboard
+- Sales performance charts and metrics
+- Product and category performance analysis
+- Store information display
+- Data visualization components
+
+AddProductForm.jsx - Product creation form
+- Form for adding new products with validation
+- Image upload functionality
+- Category assignment
+
+EditProductForm.jsx - Product editing interface  
+- Form for modifying existing products
+- Pre-populated with current product data
+
+LoginView.jsx - User authentication
+- Login form with JWT token handling
+- Redirects to sales view on successful login
+
+RegisterView.jsx - User registration
+- Account creation form
+- Links to login view
+
+HomePage.jsx - Landing page
+- Entry point for unauthenticated users
+
+AboutUs.jsx - Company/application information
+
+CORE COMPONENTS:
+
+Header.jsx - Application header
+- Search functionality for products
+- Category filtering dropdown
+- Add product and manage categories buttons
+- View mode toggle (grid/list)
+
+Sidebar.jsx - Navigation sidebar  
+- Three main navigation items: Home, Analytics, Settings
+- Icon-based navigation with hover effects
+- Active state indication
+
+ProductGrid.jsx - Product display grid
+- Grid layout for product cards
+- Search and category filtering
+- Product management actions (edit, delete, restock)
+
+ProductCard.jsx - Individual product display
+- Product information display (name, price, stock, image)
+- Add to cart functionality
+- Edit and delete actions
+- Stock level indicators
+
+Cart.jsx - Shopping cart management
+- Display cart items with quantities
+- Price calculations and totals
+- Checkout functionality  
+- Cart item modifications
+
+CategoryManagementComponent.jsx - Category CRUD operations
+- Add, edit, and delete categories
+- Category listing and management
+
+RestockButton.jsx - Inventory restocking
+- Quick restock functionality for products
+- Quantity adjustment interface
+
+SettingsPage.jsx - User and store settings
+- Profile information management  
+- Store configuration
+- Settings form interface
+
+CONTEXT PROVIDERS:
+
+ThemeContext.jsx - Theme management
+- Light/dark mode toggle
+- Theme state persistence
+- Theme provider for all components
+
+AUTHENTICATION SYSTEM
+----------------------
+The application uses JWT-based authentication:
+
+Token Storage:
+- JWT tokens stored in localStorage as 'userToken'
+- Store ID stored as 'storeId' for multi-store support
+
+Authentication Flow:
+1. User submits login credentials
+2. Server validates and returns JWT token
+3. Token stored in localStorage  
+4. Token sent in Authorization header for protected requests
+5. Server validates token on protected endpoints
+
+Route Protection:
+- checkAuthStatus() function verifies token existence
+- Redirects unauthenticated users to login
+- Protected components check authentication status
+
+Token Management:
+- Logout clears tokens from localStorage
+- No automatic token refresh implemented
+- No session timeout handling
+
+DEPLOYMENT INSTRUCTIONS
+-----------------------
+
+PRODUCTION BUILD:
+1. Build frontend:
+   cd client
+   npm run build
+   # Creates dist/ directory with production files
+
+2. Backend configuration:
+   - Set up MongoDB connection (Atlas recommended)
+   - Configure JWT secret key
+   - Set production environment variables
+   - Configure file upload directory
+
+3. Server deployment:
+   - Deploy backend to hosting service (Heroku, Railway, etc.)
+   - Deploy frontend build files to CDN or static hosting
+   - Configure CORS for production domain
+
+Environment Variables (Production):
+- MONGODB_URI - Database connection string
+- JWT_SECRET - Secret key for token signing  
+- PORT - Server port (default 3000)
+- NODE_ENV - Set to "production"
+
+Static File Serving:
+- Backend serves uploaded images from public/uploads/
+- Frontend build files can be served by backend or separate CDN
+
+CONTRIBUTING GUIDELINES
+-----------------------
+
+CODE STYLE:
+- Use functional React components with hooks
+- Follow consistent naming conventions
+- Use meaningful variable and function names
+- Add comments for complex logic
+- Use ES6+ features (arrow functions, destructuring, etc.)
+
+COMPONENT STRUCTURE:
+```javascript
+import React, { useState, useEffect } from 'react';
+
+const ComponentName = ({ prop1, prop2 }) => {
+  const [state, setState] = useState(initialValue);
+  
+  useEffect(() => {
+    // Side effects
+  }, [dependencies]);
+  
+  const handleEvent = () => {
+    // Event handler logic
+  };
+  
+  return (
+    <div>
+      {/* JSX content */}
+    </div>
+  );
+};
+
+export default ComponentName;
+```
+
+GIT WORKFLOW:
+1. Create feature branch from main
+2. Make changes and commit with descriptive messages
+3. Test changes locally
+4. Submit pull request with description
+5. Code review and merge
+
+BRANCH NAMING:
+- feature/feature-name
+- bugfix/issue-description
+- hotfix/critical-fix
+
+COMMIT MESSAGE FORMAT:
+- feat: Add new feature
+- fix: Bug fix  
+- docs: Documentation updates
+- style: Formatting changes
+- refactor: Code restructuring
+
+FILE NAMING CONVENTIONS:
+- React components: PascalCase (ComponentName.jsx)
+- Utilities: camelCase (utilityFunction.js)
+- Constants: UPPER_SNAKE_CASE
+- Directories: camelCase or kebab-case
+
+DEVELOPMENT BEST PRACTICES:
+- Test changes before committing
+- Use meaningful commit messages
+- Keep components small and focused
+- Follow React hooks best practices
+- Maintain consistent code formatting
+- Update documentation when adding features

@@ -1,0 +1,308 @@
+ShopAssistant - User Manual
+===========================
+
+TABLE OF CONTENTS
+------------------
+1. Welcome to ShopAssistant
+2. System Requirements
+3. Getting Started
+4. Main Dashboard
+5. Product Management
+6. Category Management  
+7. Sales and Cart Operations
+8. Analytics Dashboard
+9. Settings and Profile
+10. Troubleshooting
+11. Tips and Best Practices
+
+WELCOME TO SHOPASSISTANT
+-------------------------
+ShopAssistant is a retail management application that helps you manage your store's inventory, process sales, and track business performance.
+
+Current Features:
+- Product inventory management with image uploads
+- Category organization system
+- Shopping cart and checkout functionality
+- Sales analytics and reporting
+- User profile and store settings
+- Light/dark theme switching
+
+SYSTEM REQUIREMENTS
+-------------------
+Hardware Requirements:
+- Computer or tablet with internet connection
+- Minimum 2GB RAM
+- At least 100MB free storage space
+
+Software Requirements:
+- Modern web browser (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
+- JavaScript enabled
+- Stable internet connection
+- Screen resolution 1024x768 or higher
+
+GETTING STARTED
+---------------
+
+ACCOUNT REGISTRATION:
+1. Open ShopAssistant in your web browser
+2. Click "Register" or "Sign Up" 
+3. Fill in your information:
+   - Full Name
+   - Email Address
+   - Phone Number
+   - Store Name
+   - Password (secure password required)
+4. Submit the registration form
+5. You'll be automatically logged in after successful registration
+
+USER LOGIN:
+1. Enter your email address
+2. Enter your password
+3. Click "Sign In"
+4. You'll be taken to the main sales dashboard
+
+MAIN DASHBOARD
+--------------
+
+NAVIGATION SIDEBAR:
+The sidebar on the left contains three main sections:
+- 🏠 Home - Main sales interface
+- 📊 Analytics - Business performance data
+- ⚙️ Settings - Profile and store configuration
+
+SALES INTERFACE (Home):
+This is your main work area containing:
+- Header with search and action buttons
+- Product grid displaying your inventory
+- Shopping cart for processing sales
+- Category filter options
+
+PRODUCT MANAGEMENT
+------------------
+
+VIEWING PRODUCTS:
+Your products are displayed in a grid layout showing:
+- Product image (if uploaded)
+- Product name  
+- Current price
+- Stock quantity
+- Category
+
+SEARCH AND FILTERING:
+- Use the search box in the header to find products by name
+- Select category from dropdown to filter by product type
+- View all products by selecting "All" category
+
+ADDING NEW PRODUCTS:
+1. Click "Add product" button in the header
+2. Fill in the product information:
+   - Product Name (required)
+   - Description
+   - Price (required)
+   - Cost (for profit calculations)
+   - Stock Quantity
+   - Category selection
+3. Upload product image (optional):
+   - Click image upload area
+   - Select image file (JPEG, PNG, GIF)
+   - Maximum file size: 5MB
+4. Click "Save" to add the product
+
+EDITING EXISTING PRODUCTS:
+1. Find the product in the grid
+2. Click the "Edit" button on the product card
+3. Modify any information as needed
+4. Upload a new image if desired
+5. Click "Save Changes" to update
+
+RESTOCKING PRODUCTS:
+1. Click the "Restock" button on a product card
+2. Enter the quantity to add to current stock
+3. Confirm the restock amount
+4. Stock quantity will be updated automatically
+
+DELETING PRODUCTS:
+1. Click the "Delete" button on product card  
+2. Confirm deletion in the popup dialog
+3. Product will be permanently removed
+
+CATEGORY MANAGEMENT
+-------------------
+
+VIEWING CATEGORIES:
+Categories help organize your products and make them easier to find.
+
+MANAGING CATEGORIES:
+1. Click "Manage Categories" button in the header
+2. View list of existing categories
+3. Create new categories:
+   - Click "Add Category"
+   - Enter category name
+   - Click "Save"
+4. Delete categories:
+   - Click delete button next to category
+   - Confirm deletion
+   - Note: Products in deleted categories will become uncategorized
+
+SALES AND CART OPERATIONS
+--------------------------
+
+PROCESSING A SALE:
+
+Adding Items to Cart:
+1. Browse or search for products
+2. Click "Add to Cart" on desired products
+3. Items appear in the cart sidebar
+4. Adjust quantities using +/- buttons
+5. Remove items if needed
+
+Shopping Cart Features:
+- View all selected items
+- See individual and total prices
+- Adjust item quantities
+- Remove individual items
+- Clear entire cart
+
+Completing a Sale:
+1. Review cart contents and total
+2. Click "Checkout" or "Complete Sale"
+3. Sale will be processed and recorded
+4. Cart will be cleared for next customer
+5. Stock levels automatically updated
+
+CART MANAGEMENT:
+- Cart shows real-time totals
+- Stock availability is checked automatically
+- Low stock warnings prevent overselling
+- Cart persists during session
+
+ANALYTICS DASHBOARD
+-------------------
+
+ACCESSING ANALYTICS:
+Click the 📊 Analytics icon in the sidebar to view business performance data.
+
+AVAILABLE METRICS:
+
+Store Overview:
+- Total income/revenue
+- Total profit calculations  
+- Total expenses
+- Store information display
+
+Product Performance:
+- Sales data by product
+- Profit margins by item
+- Stock movement tracking
+- Best selling products
+
+Category Analysis:
+- Sales performance by category
+- Category profitability
+- Category comparison data
+
+Time-Based Data:
+- Monthly performance charts
+- Sales trends over time
+- Historical comparison data
+
+CHART FEATURES:
+- Visual data representation
+- Multiple chart types available
+- Time period selection
+- Data export capabilities (if available)
+
+SETTINGS AND PROFILE
+--------------------
+
+ACCESSING SETTINGS:
+Click the ⚙️ Settings icon in the sidebar.
+
+PROFILE MANAGEMENT:
+- Update personal information
+- Change contact details  
+- Upload profile picture
+- Modify account settings
+
+STORE INFORMATION:
+- Edit store name
+- Update contact information
+- Modify store details
+- Configure business settings
+
+THEME SETTINGS:
+- Switch between light and dark themes
+- Theme preference is saved automatically
+- Changes apply immediately
+
+TROUBLESHOOTING
+---------------
+
+COMMON ISSUES:
+
+Cannot Login:
+- Verify email address and password are correct
+- Check if Caps Lock is enabled
+- Try refreshing the browser page
+- Clear browser cache if needed
+
+Products Not Loading:
+- Check internet connection
+- Refresh the page (F5 or Ctrl+R)
+- Try logging out and back in
+- Verify you're properly authenticated
+
+Images Not Uploading:
+- Check file size (must be under 5MB)
+- Ensure file is correct format (JPEG, PNG, GIF)
+- Try a different image file
+- Check internet connection speed
+
+Cart Issues:
+- Refresh the page to reset cart
+- Check if products are still in stock
+- Try logging out and back in
+- Clear browser cache
+
+Page Loading Slowly:
+- Check internet connection speed
+- Close other browser tabs
+- Try different browser
+- Clear browser cache and cookies
+
+TIPS AND BEST PRACTICES
+-----------------------
+
+Daily Operations:
+- Regular inventory checks
+- Update product prices as needed
+- Monitor low stock items
+- Review daily sales performance
+
+Product Management:
+- Use clear, descriptive product names
+- Keep product information up to date
+- Upload product images for better identification
+- Organize products with appropriate categories
+- Set realistic stock levels
+
+Sales Processing:
+- Double-check orders before completing
+- Keep cart organized and clear after each sale
+- Monitor stock levels during busy periods
+- Process sales promptly
+
+Data Management:
+- Regularly review analytics data
+- Keep store information current
+- Back up important data if possible
+- Monitor system performance
+
+Getting Help:
+- Use the search function to find products quickly
+- Check analytics regularly to understand business trends
+- Keep product categories organized
+- Report any system issues promptly
+- Document recurring problems for faster resolution
+
+This completes the ShopAssistant User Manual. The application provides essential retail management features with a user-friendly interface designed for efficiency and ease of use.
