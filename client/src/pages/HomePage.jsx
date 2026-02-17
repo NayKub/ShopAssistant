@@ -55,7 +55,7 @@ const HomePage = ({ navigateTo, currentView = 'home' }) => {
         <div className="text-left text-white ml-0 pl-12 mt-[-5rem] z-10">
           <h1 className="font-horizon text-[5rem] m-0 tracking-[0.1em] leading-tight">WELCOME,</h1>
           <h1 className="font-horizon text-[5rem] m-0 tracking-[0.1em] leading-tight">SHOP</h1>
-          <h1 className="font-horizon text-[5rem] m-0 tracking-[0.1em] leading-tight">ASSISTANCE</h1>
+          <h1 className="font-horizon text-[5rem] m-0 tracking-[0.1em] leading-tight">ASSISTANT</h1>
         </div>
 
         <div className="absolute bottom-[15%] flex justify-center w-full z-10">
