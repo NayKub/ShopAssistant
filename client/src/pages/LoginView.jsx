@@ -57,7 +57,7 @@ const LoginView = ({ navigateTo, onLoginSuccess }) => {
         <h1 className="text-left text-black m-0 text-[2.5rem] font-bold">Login</h1>        
         <input
           type="text"
-          placeholder="Store Name/email"
+          placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
